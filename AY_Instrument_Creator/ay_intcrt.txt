@@ -1,0 +1,10 @@
+
+programa : AyInstPl.tap
+
+carregador : ay_intcrt.z80
+
+código : ay_intcrt.tap : 25.000 - 28.157 : 3.158 Bytes
+
+tabela frequências AY: FreqAY.dat : 30.000 - 30.191 : 192 Bytes
+
+tabela instrumentos: AYIntCrt.dat : 32.000 - 35.583 : 3.584 Bytes

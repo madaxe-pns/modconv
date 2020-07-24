@@ -1,0 +1,12 @@
+
+programa : Nome_da_Musica.tap (neste caso popcorn.tap)
+
+carregador: ay_player.z80
+
+código : ay_player.tap : 25.000 - 27.977 : 2.978
+
+tabela frequências AY: FreqAY.dat : 28.000 - 28.191 : 192 Bytes
+
+	Total código + freq ay : 25.000 - 28.191 : 3.192 Bytes
+
+música AY: popcorn.may : 30.000 - 32.888 : 2.889 Bytes

@@ -1,0 +1,166 @@
+Formato dos Ficheiros .MOD
+--------------------------
+
+Toda a informação sobre os Ficheiros .Mod pode ser encontrada aqui:
+
+https://www.exotica.org.uk/wiki/Protracker
+http://coppershade.org/articles/More!/Topics/Protracker_File_Format/
+
+
+Formato dos Ficheiros FM
+------------------------
+
+Posição - Conteúdo - Tamanho
+
+0 - Nome - 20 Bytes
+20 - SongLen - 1 Byte
+21 - MaxPat - 1 Byte
+
+22 - SongPos - 128 Bytes
+
+150 - Patterns - 1.152 * MaxPat (se MaxPat=10 então Patterns = 1.152 * 10 = 11.520 Bytes)
+
+   Cada Pattern: 18 Bytes * 64 Rows = 1.152 Bytes
+
+   Cada Row: 18 Bytes (2 Bytes por Canal * 9 Canais)
+
+      Byte 0 - EE OO FFFF - Número do Efeito, Oitava e Nota - Canal 1
+      Byte 1 - EP IIIII -  Parâmetro do Efeito, Instrumento - Canal 1
+	...
+	...
+	...
+	...
+      Byte 16 - EE OO FFFF - Número do Efeito, Oitava e Nota - Canal 9
+      Byte 17 - EP IIIII -  Parâmetro do Efeito, Instrumento - Canal 9
+
+	Efeitos: EE=0 - Instrumento
+		     	O Número do Instrumento é definido por IIIII
+
+		 EE=1 - Salta para a Posição definida pelo Parâmetro
+		     	A Posição é definida por EP IIIII
+			Neste Efeito não há Número do Instrumento
+
+		 EE=2 - Salta para a Posição Seguinte
+			Neste Efeito não há Número do Instrumento
+
+		 EE=3 - Volume do Canal
+			Volume é definido por EP
+
+150 + Patterns - Instrumentos - 31*32 = 992 Bytes
+150 + Patterns + 992 - Oitavas - 31 Bytes
+
+
+Formato do Ficheiro SAA
+-----------------------
+
+Posição - Conteúdo - Tamanho
+
+0 - Nome - 20 Bytes
+20 - SongLen - 1 Byte
+21 - MaxPat - 1 Byte
+
+22 - SongPos - 128 Bytes
+
+150 - Patterns - 1.536 * MaxPat (se MaxPat=10 então Patterns = 1.536 * 10 = 15.360 Bytes)
+
+   Cada Pattern: 24 Bytes * 64 Rows = 1.536 Bytes
+
+   Cada Row: 24 Bytes (2 Bytes por Canal * 12 Canais)
+
+      Byte 0 - EE OO FFFF - Número do Efeito, Oitava e Nota - Canal 1
+      Byte 1 - EP IIIII - Parâmetro do Efeito , Instrumento - Canal 1
+	...
+	...
+	...
+	...
+      Byte 22 - EE OO FFFF - Número do Efeito, Oitava e Nota - Canal 12
+      Byte 23 - EP IIIII - Parâmetro do Efeito , Instrumento - Canal 12
+
+	Efeitos: EE=0 - Número do Instrumento
+		     	O Número do Instrumento é definido por IIIII
+
+		 EE=1 - Salta para a Posição definida pelo Parâmetro
+		     	A Posição é definida por EP IIIII
+			Neste Efeito não há Número do Instrumento
+
+		 EE=2 - Salta para a Posição Seguinte
+			Neste Efeito não há Número do Instrumento
+
+		 EE=3 - Volume do Canal
+			Volume é definido por EP
+
+150 + Patterns - Instrumentos - 31*868 = 868 Bytes
+150 + Patterns + 868 - Oitavas - 31 Bytes
+
+
+Formato do Ficheiro MAY
+-----------------------
+
+Posição - Conteúdo - Tamanho
+
+0 - Nome - 20 Bytes
+20 - SongLen - 1 Byte
+21 - MaxPat - 1 Byte
+
+22 - SongPos - 128 Bytes
+
+150 - Patterns - 256 * MaxPat (se MaxPat=10 então Patterns = 256 * 10 = 2.560 Bytes)
+
+   Cada Pattern: 4 Bytes * 64 Rows = 256 Bytes
+
+   Cada Row: 4 Bytes.
+
+      Byte 0 - LL OO FFFF - Low Byte Instrumento, Oitava e Nota - Canal A
+      Byte 1 - LL OO FFFF - Low Byte Instrumento, Oitava e Nota - Canal B
+      Byte 2 - LL OO FFFF - Low Byte Instrumento, Oitava e Nota - Canal C
+      Byte 3 - AA BB CC EE - Hi Byte Instrumento - Canal A
+			     Hi Byte Instrumento - Canal B
+			     Hi Byte Instrumento - Canal C
+			     Número do Efeito
+
+	Efeitos: EE=0 - Número do Instrumento
+
+		 EE=1 - Salta para a Posição definida pelo Parâmetro.
+		     	Neste Casa a Posição é definida por AA BB CC E
+			Neste Efeito não há Número do Instrumento
+
+		 EE=2 - Salta para a Posição Seguinte
+			Neste Efeito não há Número do Instrumento
+
+150 + Patterns - Instrumentos - 31*8 = 248 Bytes
+150 + Patterns + 248 - Oitavas - 31 Bytes
+
+
+Frequências
+-----------
+
+Em todos os sistemas as Frequências das Notas (FFFF) são definidas por:
+
+BIN - DEC - HEX - Nota
+
+0000 - 00 - 00 - Sem Nota Atribuída
+0001 - 01 - 01 - C  - Dó
+0010 - 02 - 02 - C# - Dó Sustenido
+0011 - 03 - 03 - D  - Ré
+0100 - 04 - 04 - D# - Ré Sustenido
+0101 - 05 - 05 - E  - Mi
+0110 - 06 - 06 - F  - Fá
+0111 - 07 - 07 - F# - Fá Sustenido
+1000 - 08 - 08 - G  - Sol
+1001 - 09 - 09 - G# - Sol Sustenido
+1010 - 10 - 0A - A  - Lá
+1011 - 11 - 0B - A# - Lá Sustenido
+1100 - 12 - 0C - B  - Si
+
+
+Oitavas
+-----------
+
+Em todos os sistemas as Oitavas (OO) são definidas por:
+
+BIN - DEC - HEX - Nota
+
+0000 - 00 - 00 - Sem Oitvava Atribuída
+0001 - 01 - 01 - Oitava 1
+0010 - 02 - 02 - Oitava 2
+0011 - 03 - 03 - Oitava 3
