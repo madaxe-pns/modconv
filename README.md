@@ -5,6 +5,7 @@ Conversor de ficheiros .MOD para FM OPL2, AY-3-8912 e Philips SAA1009.
 Site Oficial: http://homepage.oninet.pt/modconv/
 
 Por José Mário Machado a.k.a. MadAxe
+
 (C) 2020 Penisoft
 
 ### AY_Instrument_Creator
