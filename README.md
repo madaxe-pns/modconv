@@ -1,5 +1,5 @@
 # ModConv
-Sources do ModConv 1.5
+Sources do ModConv 1.5 - 
 Conversor de ficheiros .MOD para FM OPL2, AY-3-8912 e Philips SAA1009.
 
 Site Oficial: http://homepage.oninet.pt/modconv/
