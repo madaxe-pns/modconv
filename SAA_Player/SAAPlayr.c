@@ -1,12 +1,9 @@
 /*****************************************/
-/*										 */
-/*	 		SAA Player 1.2	    	 	 */	
+/*	 		SAA Player 1.3	    	 	 */	
 /*										 */
 /*	 Leitor de Músicas Philips SAA1099	 */	
 /*   CMS Card/Game Blaster, Sam Coupé    */
 /*          							 */
-/* 		(C) 2020 Penisoft / MadAxe		 */
-/*										 */
 /*****************************************/
 
 /* Includes */
@@ -65,6 +62,7 @@ void writesa7(int reg, int value);
 void getenvlsa(unsigned char canal);
 void envelopsa(unsigned char canal);
 void precriasomsa(unsigned char canal,int freqindex);
+void setvolsa(unsigned char canal);
 void criasomsa(unsigned char canal,int freqindex);
 void stopsomsa(int canal);
 
@@ -208,7 +206,7 @@ void screenopen(void)
 
 	cprintf("\r\n");	
 	textcolor(11);
-	cprintf(" SAA Player 1.2 - ");
+	cprintf(" SAA Player 1.3 - ");
 	textcolor(10);
 	cprintf(" (C) 2020 Penisoft / MadAxe\r\n");
 	
@@ -230,7 +228,7 @@ void screenclose(void)
 	clrscr();	
 	
 	textcolor(11);
-	cprintf("SAA Player 1.2\r\n");
+	cprintf("SAA Player 1.3\r\n");
 	textcolor(10);
 	cprintf("(C) 2020 Penisoft / MadAxe\r\n");
 	
@@ -288,7 +286,8 @@ void mainmenu(void)
 			{
 				sisa=playenvlsa[i];
 				envelopsa(i);
-				criasomsa(i,freqsa[i]);
+			//	criasomsa(i,freqsa[i]);
+				setvolsa(i);
 			}
 
 		playsaend=letempo();
@@ -485,7 +484,52 @@ void precriasomsa(unsigned char canal,int freqindex)
 	getenvlsa(canal);
 	
 	if (playenvlsa[canal]!=0) freqsa[canal]=freqindex;
-	else criasomsa(canal,freqindex);
+//	else criasomsa(canal,freqindex);
+	
+	criasomsa(canal,freqindex);
+	
+}
+
+/* Apenas atualiza o Volume dos Canais SAA1099 em caso de Envelope */
+void setvolsa(unsigned char canal)
+{
+	
+	if (canal<6)
+	{
+		
+		if (cnlonsa[canal]==1)
+		{
+			if (soundtype==0)												/* Volume */
+				writesa1(0x00+canal,volumesa[canal]*16+volumesa[canal]);	/* Mono */
+			else
+			{
+				if (canal==0 || canal==2 || canal==4)						/* Estéreo */
+					writesa1(0x00+canal,volumesa[canal]*16);
+				else
+					writesa1(0x00+canal,volumesa[canal]);
+			}
+		}
+		else writesa1(0x00+canal,0);
+				
+	}
+	else
+	{
+		
+		if (cnlonsa[canal]==1)
+		{
+			if (soundtype==0)												/* Volume */
+				writesa7(0x00+canal-6,volumesa[canal]*16+volumesa[canal]);	/* Mono */
+			else
+			{
+				if (canal==6 || canal==8 || canal==10)						/* Estéreo */
+					writesa7(0x00+canal-6,volumesa[canal]*16);
+				else
+					writesa7(0x00+canal-6,volumesa[canal]);
+			}
+		}
+		else writesa7(0x00+canal-6,0);
+		
+	}
 	
 }
 
