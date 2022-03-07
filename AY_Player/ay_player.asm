@@ -1,7 +1,5 @@
-; AY Player 1.0
 ; Player de Músicas AY convertidas
-; no ModConv 1.5
-; (C) 2020 Penisoft / Madaxe
+; no ModConv
 
 .org 25000
 
@@ -64,6 +62,7 @@ noiseca .db 0
 repeteca .db 0
 effectca .db 0
 effectparca .db 0
+factora	.db 1
 
 ; Definições Canal B
 playenvcb .db 0
@@ -87,6 +86,7 @@ noisecb .db 0
 repetecb .db 0
 effectcb .db 0
 effectparcb .db 0
+factorb	.db 1
 
 ; Definições Canal C
 playenvcc .db 0
@@ -110,13 +110,14 @@ noisecc .db 0
 repetecc .db 0
 effectcc .db 0
 effectparcc .db 0
+factorc	.db 1
 
 ; Portos do AY-3-8912
 ayctrl equ 65533
 aydata equ 49149
 
 ; Tabela das Frequências das Notas AY
-tabfreq equ 28000
+tabfreq equ 28100
 
 ; Informação sobre a Nota
 oitava .db 4
@@ -136,7 +137,7 @@ pausa .db 0
 sai .db 0
 
 ; Textos
-texto000 .db 16,4,17,0,22,0,0,"AY Player 1.0                   "
+texto000 .db 16,4,17,0,22,0,0,"AY Player 1.5                   "
 		 .db 16,5,17,0,22,2,0,"Nome:"
 		 .db 16,5,17,0,22,3,0,"Posicoes:"
 		 .db 16,5,17,0,22,4,0,"Patterns:"
@@ -145,11 +146,11 @@ texto000 .db 16,4,17,0,22,0,0,"AY Player 1.0                   "
 
 texto001 .db 0
 
-texto010 .db 16,4,17,0,22,1,0,"(C) 2020 Penisoft / MadAxe",16,7,17,0
+texto010 .db 16,4,17,0,22,1,0,"(C) 2022 Penisoft / MadAxe",16,7,17,0
 texto011 .db 0
 
-texto020 .db 16,0,17,7,22,0,0,"AY Player 1.0"
-		 .db 16,0,17,7,22,1,0,"(C) 2020 Penisoft / MadAxe"
+texto020 .db 16,0,17,7,22,0,0,"AY Player 1.5"
+		 .db 16,0,17,7,22,1,0,"(C) 2022 Penisoft / MadAxe"
 texto021 .db 0
 
 
@@ -190,7 +191,8 @@ main:
 
  ld a,(playenv)
  cp 0
- call nz,playsom
+ call nz,setvol
+; call nz,playsom
 
  ld a,(sai)	; Verifica a Saída
  cp 1
@@ -1018,8 +1020,7 @@ psenvca:
  ld (noiseca),a
 
  call getenvca
-
- jp fimpreparasom
+ jp fimpsgetvol
 
 ; Prepara o Envelope do Canal B
 psenvcb:
@@ -1046,8 +1047,7 @@ psenvcb:
  ld (noisecb),a
 
  call getenvcb
-
- jp fimpreparasom
+ jp fimpsgetvol
 
 ; Prepara o Envelope do Canal C
 psenvcc:
@@ -1074,6 +1074,7 @@ psenvcc:
  ld (noisecc),a
 
  call getenvcc
+ jp fimpsgetvol
  
 fimpreparasom:
  ld a,1		; Ecrã inferior
@@ -1339,6 +1340,42 @@ saiplaysom:
  ret
 
 
+; Apenas atualiza o Volume dos Canais em caso de Envelope
+setvol:
+
+; ld a,(canal) ; Vai buscar o Canal Selecionado
+; cp 0
+; jr z, svcanala
+; cp 1
+; jp z, svcanalb
+; cp 2
+; jp z, svcanalc
+
+; Canal A
+svcanala:
+ ld d,8 		; Volume do Canal A
+ ld a,(volica)
+ ld e,a
+ call outer
+
+; Canal B
+svcanalb:
+ ld d,9 		; Volume do Canal B
+ ld a,(volicb)
+ ld e,a
+ call outer
+
+; Canal C
+svcanalc:
+ ld d,10 		; Volume do Canal C
+ ld a,(volicc)
+ ld e,a
+ call outer
+
+saisetvol:
+ ret
+
+
 ; Desliga o Som
 stopsom:
 
@@ -1400,6 +1437,16 @@ fimgetfreq:
 
 ; Envelope do Canal A
 envcanala:
+
+ ld hl,factora
+ ld a,(hl)
+ cp 0
+ jr z,senvcanala
+ dec (hl)
+ jp fimenvcanala2	
+
+senvcanala
+ ld (hl),1
 
 ; Attack Canal A
  ld a,(attackca)	; Verifica se estamos numa fase de Attack
@@ -1519,6 +1566,16 @@ fimenvcanala2:
 ; Envelope do Canal B
 envcanalb:
 
+ ld hl,factorb
+ ld a,(hl)
+ cp 0
+ jr z,senvcanalb
+ dec (hl)
+ jp fimenvcanalb2	
+
+senvcanalb
+ ld (hl),1
+
 ; Attack Canal B
  ld a,(attackcb)	; Verifica se estamos numa fase de Attack
  cp 0
@@ -1636,6 +1693,16 @@ fimenvcanalb2:
 
 ; Envelope do Canal C
 envcanalc:
+
+ ld hl,factorc
+ ld a,(hl)
+ cp 0
+ jr z,senvcanalc
+ dec (hl)
+ jp fimenvcanalc2	
+
+senvcanalc
+ ld (hl),1
 
 ; Attack Canal C
  ld a,(attackcc)	; Verifica se estamos numa fase de Attack
