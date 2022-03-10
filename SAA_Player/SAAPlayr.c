@@ -1,10 +1,12 @@
-/*****************************************/
-/*	 		SAA Player 1.3	    	 	 */	
-/*										 */
-/*	 Leitor de Músicas Philips SAA1099	 */	
-/*   CMS Card/Game Blaster, Sam Coupé    */
-/*          							 */
-/*****************************************/
+/*
+/*         SAA Player 1.5
+/*
+/*  Leitor de Músicas Philips SAA1099
+/*  CMS Card/Game Blaster, Sam Coupé
+/*
+/*   Para compilar: tcc SAAPlayr.c
+/*
+*/
 
 /* Includes */
 #include <stdio.h>
@@ -40,8 +42,9 @@
 #define SA_As	31	/* Lá Sustenido */
 #define SA_B	58	/* Si */
 
-#define SAANUNCANAIS 12	/* Número de Canais SAA1099 */
-#define SIZEPATINFOSA 1536	/* Tamanho da Pattern SAA1099 */
+#define SIZEPATINFOSA 768	/* Tamanho da Pattern SAA1099 */
+#define SIZEROWSA 12		/* Número de Bytes das Rows SAA1099 */
+#define SAANUNCANAIS 6		/* Número de Canais SAA1099 */
 
 void screenopen(void);
 void screenclose(void);
@@ -96,7 +99,7 @@ unsigned char position;
 unsigned char pattern,py;
 unsigned char row;
 unsigned char oitavasa[SAANUNCANAIS];
-unsigned char freqsa[SAANUNCANAIS];
+unsigned char canalinstsa[SAANUNCANAIS];
 unsigned char volumesa[SAANUNCANAIS];
 unsigned char *patinfosa;
 unsigned char freqenbsa=0;
@@ -148,7 +151,7 @@ struct cabfilessa
 } cabfilesa;
 
 short notassa[13]={SA_V,SA_C,SA_Cs,SA_D,SA_Ds,SA_E,SA_F,SA_Fs,SA_G,SA_Gs,SA_A,SA_As,SA_B};
-short cnlonsa[SAANUNCANAIS]={1,1,1,1,1,1,1,1,1,1,1,1};
+short cnlonsa[SAANUNCANAIS]={1,1,1,1,1,1};
 unsigned octsa[2][3]={0,0,0,0,0,0};
 
 /* Estado */
@@ -162,21 +165,21 @@ int main(int argc, char *argv[])
 	if(argc==2)
 	{
 		sprintf(nomefilesa,argv[1]);
-		soundtype=0;
+		soundtype=1;
 	}
 	else if(argc==3)
 	{
 		sprintf(nomefilesa,argv[1]);
-		if (strcmp(argv[2],"st")==0) soundtype=1;
-		else soundtype=0;
+		if (strcmp(argv[2],"mono")==0) soundtype=0;
+		else soundtype=1;
 	}
 	else
 	{
 		sprintf(txtsts,"\r\nUtilizacao: SAAPlayr NomeMusica.saa soundtype");
 		printestado();
-		sprintf(txtsts,"\r\nsoundtype=st para Estereo");
+		sprintf(txtsts,"\r\nsoundtype=mono para Mono");
 		printestado();
-		sprintf(txtsts,"Mono por defeito");
+		sprintf(txtsts,"Estereo por defeito");
 		printestado();
 		return(1);
 	}
@@ -206,9 +209,9 @@ void screenopen(void)
 
 	cprintf("\r\n");	
 	textcolor(11);
-	cprintf(" SAA Player 1.3 - ");
+	cprintf(" SAA Player 1.5 - ");
 	textcolor(10);
-	cprintf(" (C) 2020 Penisoft / MadAxe\r\n");
+	cprintf(" (C) 2022 Penisoft / MadAxe\r\n");
 	
 	textcolor(7);
 	
@@ -228,9 +231,9 @@ void screenclose(void)
 	clrscr();	
 	
 	textcolor(11);
-	cprintf("SAA Player 1.3\r\n");
+	cprintf("SAA Player 1.5\r\n");
 	textcolor(10);
-	cprintf("(C) 2020 Penisoft / MadAxe\r\n");
+	cprintf("(C) 2022 Penisoft / MadAxe\r\n");
 	
 	_setcursortype(_NORMALCURSOR);
 	
@@ -284,7 +287,7 @@ void mainmenu(void)
 		for (i=0; i<SAANUNCANAIS; i++)
 			if (playenvlsa[i]!=0)
 			{
-				sisa=playenvlsa[i];
+				sisa=canalinstsa[i];
 				envelopsa(i);
 			//	criasomsa(i,freqsa[i]);
 				setvolsa(i);
@@ -328,7 +331,7 @@ void printdados(void)
 	textcolor(13);
 	cprintf(" Tipo de Som: ");
 	textcolor(15);
-	if (soundtype==0) cprintf("Mono.");
+	if (!soundtype) cprintf("Mono.");
 	else cprintf("Estereo.");
 	
 	cprintf("\r\n");
@@ -398,7 +401,7 @@ void getenvlsa(unsigned char canal)
 	
 	if (envlssa[canal][1]!=0) cntenvlsusssa[canal]=15;
 
-	if (envlssa[canal][0]!=0 || envlssa[canal][1]!=0 || envlssa[canal][2]!=0) playenvlsa[canal]=sisa;
+	if (envlssa[canal][0]!=0 || envlssa[canal][1]!=0 || envlssa[canal][2]!=0) playenvlsa[canal]=1;
 	
 	if (envlssa[canal][0]==0) volumesa[canal]=instregsa[sisa].volume;
 	else volumesa[canal]=0;
@@ -483,8 +486,8 @@ void precriasomsa(unsigned char canal,int freqindex)
 	
 	getenvlsa(canal);
 	
-	if (playenvlsa[canal]!=0) freqsa[canal]=freqindex;
-//	else criasomsa(canal,freqindex);
+/*	if (playenvlsa[canal]!=0) freqsa[canal]=freqindex;
+	else criasomsa(canal,freqindex); */
 	
 	criasomsa(canal,freqindex);
 	
@@ -494,43 +497,20 @@ void precriasomsa(unsigned char canal,int freqindex)
 void setvolsa(unsigned char canal)
 {
 	
-	if (canal<6)
+	if (cnlonsa[canal]==1)
 	{
-		
-		if (cnlonsa[canal]==1)
+		if (soundtype==0)												/* Volume */
+			writesa1(0x00+canal,volumesa[canal]*16+volumesa[canal]);	/* Mono */
+		else
 		{
-			if (soundtype==0)												/* Volume */
-				writesa1(0x00+canal,volumesa[canal]*16+volumesa[canal]);	/* Mono */
+			if (canal==0 || canal==2 || canal==4)						/* Estéreo */
+				writesa1(0x00+canal,volumesa[canal]*16);
 			else
-			{
-				if (canal==0 || canal==2 || canal==4)						/* Estéreo */
-					writesa1(0x00+canal,volumesa[canal]*16);
-				else
-					writesa1(0x00+canal,volumesa[canal]);
-			}
+				writesa1(0x00+canal,volumesa[canal]);
 		}
-		else writesa1(0x00+canal,0);
+	}
+	else writesa1(0x00+canal,0);
 				
-	}
-	else
-	{
-		
-		if (cnlonsa[canal]==1)
-		{
-			if (soundtype==0)												/* Volume */
-				writesa7(0x00+canal-6,volumesa[canal]*16+volumesa[canal]);	/* Mono */
-			else
-			{
-				if (canal==6 || canal==8 || canal==10)						/* Estéreo */
-					writesa7(0x00+canal-6,volumesa[canal]*16);
-				else
-					writesa7(0x00+canal-6,volumesa[canal]);
-			}
-		}
-		else writesa7(0x00+canal-6,0);
-		
-	}
-	
 }
 
 /* Produz um Som SAA1099 */
@@ -539,177 +519,89 @@ void criasomsa(unsigned char canal,int freqindex)
 	
 	unsigned char oct;
 	
-	if (canal<6)
+	if (cnlonsa[canal]==1)
 	{
-		
-		if (cnlonsa[canal]==1)
+		if (soundtype==0)												/* Volume */
+			writesa1(0x00+canal,volumesa[canal]*16+volumesa[canal]);	/* Mono */
+		else
 		{
-			if (soundtype==0)												/* Volume */
-				writesa1(0x00+canal,volumesa[canal]*16+volumesa[canal]);	/* Mono */
+			if (canal==0 || canal==2 || canal==4)						/* Estéreo */
+				writesa1(0x00+canal,volumesa[canal]*16);
 			else
-			{
-				if (canal==0 || canal==2 || canal==4)						/* Estéreo */
-					writesa1(0x00+canal,volumesa[canal]*16);
-				else
-					writesa1(0x00+canal,volumesa[canal]);
-			}
+				writesa1(0x00+canal,volumesa[canal]);
 		}
-		else writesa1(0x00+canal,0);
+	}
+	else writesa1(0x00+canal,0);
 		
-		writesa1(0x08+canal,notassa[freqindex]); 			/* Frequência */
+	writesa1(0x08+canal,notassa[freqindex]); 			/* Frequência */
 		
-		if (canal==0 || canal==1)
+	if (canal==0 || canal==1)
+	{
+		if (canal==0)
 		{
-			if (canal==0)
-			{
-				hi=(int)(octsa[0][0]/16);
-				oct=hi*16+oitavasa[canal];
-			}
-			else
-			{
-				hi=(int)(octsa[0][0]/16);
-				lo=(int)(octsa[0][0]-hi*16);
-				oct=oitavasa[canal]*16+lo;
-			}
-			octsa[0][0]=oct;
-			writesa1(0x010,octsa[0][0]);  			/* Oitava */
+			hi=(int)(octsa[0][0]/16);
+			oct=hi*16+oitavasa[canal];
 		}
-		
-		if (canal==2 || canal==3)
+		else
 		{
-			if (canal==2)
-			{
-				hi=(int)(octsa[0][1]/16);
-				oct=hi*16+oitavasa[canal];
-			}
-			else
-			{
-				hi=(int)(octsa[0][1]/16);
-				lo=(int)(octsa[0][1]-hi*16);
-				oct=oitavasa[canal]*16+lo;
-			}
-			octsa[0][1]=oct;
-			writesa1(0x011,octsa[0][1]);  			/* Oitava */
+			hi=(int)(octsa[0][0]/16);
+			lo=(int)(octsa[0][0]-hi*16);
+			oct=oitavasa[canal]*16+lo;
 		}
+		octsa[0][0]=oct;
+		writesa1(0x010,octsa[0][0]);  			/* Oitava */
+	}
 		
-		if (canal==4 || canal==5)
+	if (canal==2 || canal==3)
+	{
+		if (canal==2)
 		{
-			if (canal==4)
-			{
-				hi=(int)(octsa[0][2]/16);
-				oct=hi*16+oitavasa[canal];
-			}
-			else
-			{
-				hi=(int)(octsa[0][2]/16);
-				lo=(int)(octsa[0][2]-hi*16);
-				oct=oitavasa[canal]*16+lo;
-			}
-			octsa[0][2]=oct;
-			writesa1(0x012,octsa[0][2]);  			/* Oitava */
+			hi=(int)(octsa[0][1]/16);
+			oct=hi*16+oitavasa[canal];
 		}
+		else
+		{
+			hi=(int)(octsa[0][1]/16);
+			lo=(int)(octsa[0][1]-hi*16);
+			oct=oitavasa[canal]*16+lo;
+		}
+		octsa[0][1]=oct;
+		writesa1(0x011,octsa[0][1]);  			/* Oitava */
+	}
 		
-		if (instregsa[sisa].freqenb==1) freqenbsa=setbit(freqenbsa,canal+1); /* Frequência Enable */
-		else freqenbsa=clearbit(freqenbsa,canal+1);
+	if (canal==4 || canal==5)
+	{
+		if (canal==4)
+		{
+			hi=(int)(octsa[0][2]/16);
+			oct=hi*16+oitavasa[canal];
+		}
+		else
+		{
+			hi=(int)(octsa[0][2]/16);
+			lo=(int)(octsa[0][2]-hi*16);
+			oct=oitavasa[canal]*16+lo;
+		}
+		octsa[0][2]=oct;
+		writesa1(0x012,octsa[0][2]);  			/* Oitava */
+	}
 		
-		if (instregsa[sisa].noiseenb==1) noiseenbsa=setbit(noiseenbsa,canal+1); /* Noise Enable */
-		else noiseenbsa=clearbit(noiseenbsa,canal+1);
+	if (instregsa[sisa].freqenb==1) freqenbsa=setbit(freqenbsa,canal+1); /* Frequência Enable */
+	else freqenbsa=clearbit(freqenbsa,canal+1);
 		
-		writesa1(0x014,freqenbsa);  		/* Frequência Enable */
-		writesa1(0x015,noiseenbsa);  		/* Noise Enable */
+	if (instregsa[sisa].noiseenb==1) noiseenbsa=setbit(noiseenbsa,canal+1); /* Noise Enable */
+	else noiseenbsa=clearbit(noiseenbsa,canal+1);
+		
+	writesa1(0x014,freqenbsa);  		/* Frequência Enable */
+	writesa1(0x015,noiseenbsa);  		/* Noise Enable */
 				
-	}
-	else
-	{
-		
-		if (cnlonsa[canal]==1)
-		{
-			if (soundtype==0)												/* Volume */
-				writesa7(0x00+canal-6,volumesa[canal]*16+volumesa[canal]);	/* Mono */
-			else
-			{
-				if (canal==6 || canal==8 || canal==10)						/* Estéreo */
-					writesa7(0x00+canal-6,volumesa[canal]*16);
-				else
-					writesa7(0x00+canal-6,volumesa[canal]);
-			}
-		}
-		else writesa7(0x00+canal-6,0);
-		
-		writesa7(0x08+canal-6,notassa[freqindex]); 			/* Frequência */
-		
-		if (canal==6 || canal==7)
-		{
-			if (canal==6)
-			{
-				hi=(int)(octsa[0][0]/16);
-				oct=hi*16+oitavasa[canal];
-			}
-			else
-			{
-				hi=(int)(octsa[0][0]/16);
-				lo=(int)(octsa[0][0]-hi*16);
-				oct=oitavasa[canal]*16+lo;
-			}
-			octsa[0][0]=oct;
-			writesa7(0x010,octsa[0][0]);  			/* Oitava */
-		}
-		
-		if (canal==8 || canal==9)
-		{
-			if (canal==8)
-			{
-				hi=(int)(octsa[0][1]/16);
-				oct=hi*16+oitavasa[canal];
-			}
-			else
-			{
-				hi=(int)(octsa[0][1]/16);
-				lo=(int)(octsa[0][1]-hi*16);
-				oct=oitavasa[canal]*16+lo;
-			}
-			octsa[0][1]=oct;
-			writesa7(0x011,octsa[0][1]);  			/* Oitava */
-		}
-		
-		if (canal==10 || canal==11)
-		{
-			if (canal==10)
-			{
-				hi=(int)(octsa[0][2]/16);
-				oct=hi*16+oitavasa[canal];
-			}
-			else
-			{
-				hi=(int)(octsa[0][2]/16);
-				lo=(int)(octsa[0][2]-hi*16);
-				oct=oitavasa[canal]*16+lo;
-			}
-			octsa[0][2]=oct;
-			writesa7(0x012,octsa[0][2]);  			/* Oitava */
-		}
-		
-		if (instregsa[sisa].freqenb==1) freqenbsa=setbit(freqenbsa,canal-5); /* Frequência Enable */
-		else freqenbsa=clearbit(freqenbsa,canal-1);
-		
-		if (instregsa[sisa].noiseenb==1) noiseenbsa=setbit(noiseenbsa,canal-5); /* Noise Enable */
-		else noiseenbsa=clearbit(noiseenbsa,canal-5);
-		
-		writesa7(0x014,freqenbsa);  		/* Frequência Enable */
-		writesa7(0x015,noiseenbsa);  		/* Noise Enable */
-		
-	}
-	
 }
 
 /* Desliga o Canal SAA1099 */
 void stopsomsa(int canal)
 {
 
-	if (canal<6)
-		writesa1(0x00+canal,0);		/* Volume  */
-	else
-		writesa7(0x00+canal-6,0);		/* Volume  */
+	writesa1(0x00+canal,0);		/* Volume  */
 	
 	sprintf(txtsts,"Som Desligado\0");
 	printestado();
@@ -804,10 +696,10 @@ void carregapatsa(void)
 	cprintf("Position - %d , Pattern - %d  \n\n",position,pattern);
 */
 	y=0;
-	for (i=pattern*SIZEPATINFOSA; i<((pattern*SIZEPATINFOSA)+SIZEPATINFOSA); i+=24)
+	for (i=pattern*SIZEPATINFOSA; i<((pattern*SIZEPATINFOSA)+SIZEPATINFOSA); i+=SIZEROWSA)
 	{
 		x=0;
-		for(j=0; j<24; j+=2)
+		for(j=0; j<SIZEROWSA; j+=2)
 		{
 			
 			/* Byte 0 - Frequência, Oitava e Número do Efeito */
@@ -876,9 +768,11 @@ void playmusicasa(void)
 			
 				volumesa[j]=instregsa[sisa].volume;
 			
-				oitavasa[j]=saoct[i][j]+octinstsa[sasamplenum[i][j]-1];	/* Correcção da Oitava */
+				oitavasa[j]=saoct[i][j]+octinstsa[sisa];	/* Correcção da Oitava */
 				
 				if (safreq[i][j]>9) oitavasa[j]++;
+				
+				canalinstsa[j]=sisa;
 				
 				precriasomsa(j,safreq[i][j]);
 			//	criasomsa(j,safreq[i][j]);
@@ -923,7 +817,7 @@ void playmusicasa(void)
 	}
 	else
 	{
-		for (i=0; i<9; i++) stopsomsa(i);
+		for (i=0; i<SAANUNCANAIS; i++) stopsomsa(i);
 		row=0;
 		playsa=0;
 		sprintf(txtsts,"Musica Parada\0");
