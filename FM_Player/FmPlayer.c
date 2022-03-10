@@ -1,13 +1,12 @@
-/*****************************/
-/*							 */
-/*	 	FM Player 1.2	 	 */	
-/*							 */
-/*	 Leitor de Músicas FM	 */	
-/* AdLib / Sound Blaster Pro */
-/*							 */
-/* (C) 2020 Penisoft/MadAxe  */
-/*							 */
-/*****************************/
+/*
+/*        FM Player 1.5
+/*
+/*      Leitor de Músicas FM
+/*    AdLib / Sound Blaster Pro
+/*  
+/*  Para compilar: tcc FMPlayer.c  
+/*
+*/
 
 /* Includes */
 #include <stdio.h>
@@ -55,6 +54,10 @@
 #define FM_A	441	/* Lá */
 #define FM_As	467	/* Lá Sustenido */
 #define FM_B	494	/* Si */
+
+#define SIZEPATINFOFM 1152	/* Tamanho da Pattern FM */
+#define SIZEROWFM 18		/* Número de Bytes das Rows FM */
+#define FMNUNCANAIS 9		/* Número de Canais FM */
 
 void screenopen(void);
 void screenclose(void);
@@ -112,11 +115,11 @@ unsigned char volfm;
 unsigned char *patinfofm;
 
 /* Informação das Rows FM*/
-unsigned char fmefectnum[64][9];
-unsigned char fmfreq[64][9];
-unsigned char fmoct[64][9];
-unsigned char fmefectpar[64][9];
-unsigned char fmsamplenum[64][9];
+unsigned char fmefectnum[64][FMNUNCANAIS];
+unsigned char fmfreq[64][FMNUNCANAIS];
+unsigned char fmoct[64][FMNUNCANAIS];
+unsigned char fmefectpar[64][FMNUNCANAIS];
+unsigned char fmsamplenum[64][FMNUNCANAIS];
 
 /* Música FM */
 unsigned char playfm;
@@ -152,7 +155,7 @@ struct cabfilesfm
 } cabfilefm;
 
 short notasfm[13]={FM_V,FM_C,FM_Cs,FM_D,FM_Ds,FM_E,FM_F,FM_Fs,FM_G,FM_Gs,FM_A,FM_As,FM_B};
-short canaisfm[9]={FM_CNL_0,FM_CNL_1,FM_CNL_2,FM_CNL_3,FM_CNL_4,FM_CNL_5,FM_CNL_6,FM_CNL_7,FM_CNL_8};
+short canaisfm[FMNUNCANAIS]={FM_CNL_0,FM_CNL_1,FM_CNL_2,FM_CNL_3,FM_CNL_4,FM_CNL_5,FM_CNL_6,FM_CNL_7,FM_CNL_8};
 
 /* Estado */
 char txtsts[70];
@@ -209,9 +212,9 @@ void screenopen(void)
 
 	cprintf("\r\n");	
 	textcolor(11);
-	cprintf(" FM Player 1.2 - ");
+	cprintf(" FM Player 1.5 - ");
 	textcolor(10);
-	cprintf(" (C) 2020 Penisoft / MadAxe\r\n");
+	cprintf(" (C) 2022 Penisoft / MadAxe\r\n");
 	
 	textcolor(7);
 	
@@ -232,9 +235,9 @@ void screenclose(void)
 	clrscr();	
 	
 	textcolor(11);
-	cprintf("FM Player 1.2\r\n");
+	cprintf("FM Player 1.5\r\n");
 	textcolor(10);
-	cprintf("(C) 2020 Penisoft / MadAxe\r\n");
+	cprintf("(C) 2022 Penisoft / MadAxe\r\n");
 	
 	_setcursortype(_NORMALCURSOR);
 	
@@ -631,10 +634,10 @@ int lemusicafm(void)
 	}
 	
 	/* Aloca Memória para as Patterns FM */
-	patinfofm=(char*)calloc(1152*cabfilefm.maxpat,sizeof(char));
+	patinfofm=(char*)calloc(SIZEPATINFOFM*cabfilefm.maxpat,sizeof(char));
 	
 	/* Informação das Patterns FM */
-	if (fread(patinfofm,1152*cabfilefm.maxpat,1,fp)==0)
+	if (fread(patinfofm,SIZEPATINFOFM*cabfilefm.maxpat,1,fp)==0)
 	{
 		sprintf(txtsts,"Erro ao Ler Musica FM!\0");
 		fclose(fp);
@@ -680,10 +683,10 @@ void carregapatfm(void)
 //	cprintf("Position - %d , Pattern - %d  \n\n",position,pattern);
 
 	y=0;
-	for (i=pattern*1152; i<((pattern*1152)+1152); i+=18)
+	for (i=pattern*SIZEPATINFOFM; i<((pattern*SIZEPATINFOFM)+SIZEPATINFOFM); i+=SIZEROWFM)
 	{
 		x=0;
-		for(j=0; j<18; j+=2)
+		for(j=0; j<SIZEROWFM; j+=2)
 		{
 			
 			/* Byte 0 - Frequência, Oitava e Número do Efeito */
@@ -728,7 +731,7 @@ void playmusicafm(void)
 	{
 		
 		i=row;
-		for (j=0; j<9; j++)
+		for (j=0; j<FMNUNCANAIS; j++)
 		{
 						
 			if (fmefectnum[i][j]==2) salta=1;	/* Salta para a Próxima Pattern */
@@ -799,7 +802,7 @@ void playmusicafm(void)
 	else
 	{
 		playfm=0;
-		for (i=0; i<9; i++) stopsomfm(i);
+		for (i=0; i<FMNUNCANAIS; i++) stopsomfm(i);
 		sprintf(txtsts,"Musica Parada\0");
 		printestado();
 	}
