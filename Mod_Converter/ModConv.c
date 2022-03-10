@@ -1,17 +1,15 @@
-/************************************************************************
-	Mod Converter 1.5
-	
-	Converte um ficheiro .Mod para:
-		AY-3-8912 / YM2149F - ZX Spectrum 128K, Atari ST
-		Philips SAA1099 : CMS Card/Game Blaster, Sam Coupé
-		Yamaha YM3812 - OPL2 : Adlib, Sound Blaster, Sound Blaster Pro
-		
-	(C) 2020 Penisoft / MadAxe
-
-	Memory Model : Large
-	
-*************************************************************************/
-
+/*
+/*  Mod Converter 1.6
+/*	
+/*  Converte um ficheiro .Mod para:
+/*      AY-3-8912 / YM2149F - ZX Spectrum 128K, Atari ST
+/*      Philips SAA1099 : CMS Card/Game Blaster, Sam Coupé
+/*      Yamaha YM3812 - OPL2 : Adlib, Sound Blaster, Sound Blaster Pro
+/*
+/*  Para compilar: tcc -ml ModConv.c
+/*
+/*  (C) 2022 Penisoft / MadAxe
+/*
 
 /* Includes */
 #include <stdio.h>
@@ -146,11 +144,20 @@
 #define SA_As	31	/* Lá Sustenido */
 #define SA_B	58	/* Si */
 
-#define SAANUNCANAIS 12	/* Número de Canais SAA1099 */
+#define SIZEPATINFOMOD 1024	/* Tamanho da Pattern MOD */
+#define SIZEROWMOD 16		/* Número de Bytes das Rows MOD */
+
+#define FMNUNCANAIS 9	/* Número de Canais FM */
+#define SAANUNCANAIS 6	/* Número de Canais SAA1099 */
+#define AYNUNCANAIS 3	/* Número de Canais AY-3-8912 */
 
 #define SIZEPATINFOFM 1152	/* Tamanho da Pattern FM */
-#define SIZEPATINFOSA 1536	/* Tamanho da Pattern SAA1099 */
+#define SIZEPATINFOSA 768	/* Tamanho da Pattern SAA1099 */
 #define SIZEPATINFOAY 256	/* Tamanho da Pattern AY-3-8912 */
+
+#define SIZEROWFM 18	/* Número de Bytes das Rows FM */
+#define SIZEROWSA 12	/* Número de Bytes das Rows SAA1099 */
+#define SIZEROWAY 4		/* Número de Bytes das Rows AY-3-8912 */
 
 /* Prototypes */
 void screenopen(void);
@@ -304,6 +311,7 @@ void writesa7(int reg, int value);
 void getenvlsa(unsigned char canal);
 void envelopsa(unsigned char canal);
 void precriasomsa(unsigned char canal,int freqindex);
+void setvolsa(unsigned char canal);
 void criasomsa(unsigned char canal,int freqindex);
 void stopsomsa(int canal);
 
@@ -311,6 +319,7 @@ void stopsomsa(int canal);
 void getenvlay(unsigned char canal);
 void envelopay(unsigned char canal);
 void precriasomay(unsigned char canal,int freqindex);
+void setvolay(unsigned char canal);
 void criasomay(unsigned char canal,int freqindex);
 void stopsomay(int canal);
 
@@ -408,9 +417,12 @@ short samcolor;
 short samx,samy,sami;
 
 /* Samples */
-unsigned long offsample[31];
-unsigned long sizesamples;
-unsigned char *saminfo;
+struct samdata
+{
+	unsigned long size;
+	unsigned char *data;
+} saminfo[31];
+
 
 /* Help */
 short help;
@@ -444,7 +456,7 @@ unsigned char saminstfm[2][31];
 char octinstfm[31];
 
 /* Conversão Canais MOD -> Canais FM */
-unsigned char cnlmodcnlfm[9];
+unsigned char cnlmodcnlfm[FMNUNCANAIS];
 
 /* Patterns FM */
 unsigned char oitavafm;
@@ -453,11 +465,11 @@ unsigned char volfm;
 unsigned char *patinfofm;
 
 /* Informação das Rows FM*/
-unsigned char fmefectnum[64][9];
-unsigned char fmfreq[64][9];
-unsigned char fmoct[64][9];
-unsigned char fmefectpar[64][9];
-unsigned char fmsamplenum[64][9];
+unsigned char fmefectnum[64][FMNUNCANAIS];
+unsigned char fmfreq[64][FMNUNCANAIS];
+unsigned char fmoct[64][FMNUNCANAIS];
+unsigned char fmefectpar[64][FMNUNCANAIS];
+unsigned char fmsamplenum[64][FMNUNCANAIS];
 
 /* Toca Música FM */
 int playfm;
@@ -504,9 +516,6 @@ int playsa;
 int fimsongsa;
 unsigned long playsastart,playsaend;
 
-/* Número de Canais SAA1099 */
-char numsaacnl=SAANUNCANAIS;
-
 /* Tabela Instrumentos AY-3-8912 */
 short siay,piay;
 
@@ -518,29 +527,29 @@ unsigned char saminstay[2][31];
 char octinstay[31];
 
 /* Conversão Canais MOD -> Canais AY-3-8912 */
-unsigned char cnlmodcnlay[3];
+unsigned char cnlmodcnlay[AYNUNCANAIS];
 
 /* Patterns AY-3-8912 */
 unsigned char oitavaaycnv;
 unsigned char freqaycnv;
-unsigned char oitavaay[3];
-unsigned char freqay[3];
-unsigned char volumeay[3];
+unsigned char oitavaay[AYNUNCANAIS];
+unsigned char freqay[AYNUNCANAIS];
+unsigned char volumeay[AYNUNCANAIS];
 unsigned char *patinfoay;
 unsigned char freqenbay=0;
 unsigned char noiseenbay=0;
 int factoray=3;
-unsigned char playenvlay[3];
-unsigned char envlsay[3][3];
-unsigned short cntenvlsay[3][3];
-unsigned short cntenvlsussay[3];
+unsigned char playenvlay[AYNUNCANAIS];
+unsigned char envlsay[AYNUNCANAIS][3];
+unsigned short cntenvlsay[AYNUNCANAIS][3];
+unsigned short cntenvlsussay[AYNUNCANAIS];
 
 /* Informação das Rows AY-3-8912 */
-unsigned char ayefectnum[64][3];
-unsigned char ayfreq[64][3];
-unsigned char ayoct[64][3];
-unsigned char ayefectpar[64][3];
-unsigned char aysamplenum[64][3];
+unsigned char ayefectnum[64][AYNUNCANAIS];
+unsigned char ayfreq[64][AYNUNCANAIS];
+unsigned char ayoct[64][AYNUNCANAIS];
+unsigned char ayefectpar[64][AYNUNCANAIS];
+unsigned char aysamplenum[64][AYNUNCANAIS];
 
 /* Toca Música AY-3-8912 */
 int playay;
@@ -637,24 +646,24 @@ struct cabfilesay
 
 /* FM */
 short notasfm[13]={FM_V,FM_C,FM_Cs,FM_D,FM_Ds,FM_E,FM_F,FM_Fs,FM_G,FM_Gs,FM_A,FM_As,FM_B};
-short canaisfm[9]={FM_CNL_0,FM_CNL_1,FM_CNL_2,FM_CNL_3,FM_CNL_4,FM_CNL_5,FM_CNL_6,FM_CNL_7,FM_CNL_8};
-short cnlonfm[9]={1,1,1,1,1,1,1,1,1};
+short canaisfm[FMNUNCANAIS]={FM_CNL_0,FM_CNL_1,FM_CNL_2,FM_CNL_3,FM_CNL_4,FM_CNL_5,FM_CNL_6,FM_CNL_7,FM_CNL_8};
+short cnlonfm[FMNUNCANAIS]={1,1,1,1,1,1,1,1,1};
 
 /* SAA1099 */
 short notassa[13]={SA_V,SA_C,SA_Cs,SA_D,SA_Ds,SA_E,SA_F,SA_Fs,SA_G,SA_Gs,SA_A,SA_As,SA_B};
-short cnlonsa[SAANUNCANAIS]={1,1,1,1,1,1,1,1,1,1,1,1};
+short cnlonsa[SAANUNCANAIS]={1,1,1,1,1,1};
 unsigned octsa[2][3]={0,0,0,0,0,0};
 
 /* AY-3-8912 */
 short notasay[13]={SA_V,SA_C,SA_Cs,SA_D,SA_Ds,SA_E,SA_F,SA_Fs,SA_G,SA_Gs,SA_A,SA_As,SA_B};
-short cnlonay[3]={1,1,1};
+short cnlonay[AYNUNCANAIS]={1,1,1};
 unsigned octay[2][3]={0,0,0,0,0,0};
 
 char pconvnotas[13][3]={"--\0","C \0","C#\0","D \0","D#\0",
 					"E \0","F \0","F#\0","G \0","G#\0",
 					"A \0","A#\0","B \0"};
 					
-unsigned char ayplayer[3506];
+unsigned char ayplayer[3606];
 unsigned char aycablen[2];
 unsigned char aycab[18];
 unsigned char aycabchks[1];
@@ -676,9 +685,9 @@ int main(int argc, char *argv[])
 	{
 		clrscr();
 		textcolor(11);
-		cprintf("Mod Converter 1.5\r\n");
+		cprintf("Mod Converter 1.6\r\n");
 		textcolor(10);
-		cprintf("(C) 2020 Penisoft / MadAxe\r\n");
+		cprintf("(C) 2022 Penisoft / MadAxe\r\n");
 		textcolor(15);
 		cprintf("\nUtilizacao: ModConv NomeMusica.mod\n");
 		return(4);
@@ -709,13 +718,17 @@ void screenopen(void)
 /* Volta para o MS-Dos */
 void screenclose(void)
 {
+	
+	int i;
 
 	/* Liberta a Memória Alocada */
 	free(patinfoay);
 	free(patinfosa);
 	free(patinfofm);
 	free(patinfo);
-	free(saminfo);
+	
+	for (i=0; i<31; i++)
+		if (tisample[i]) free(saminfo[i].data);
 
 	resetfm();
 	resetsa();
@@ -725,9 +738,9 @@ void screenclose(void)
 	clrscr();	
 	
 	textcolor(11);
-	cprintf("Mod Converter 1.5\r\n");
+	cprintf("Mod Converter 1.6\r\n");
 	textcolor(10);
-	cprintf("(C) 2020 Penisoft / MadAxe\r\n");
+	cprintf("(C) 2022 Penisoft / MadAxe\r\n");
 	
 	_setcursortype(_NORMALCURSOR);
 	
@@ -744,9 +757,9 @@ int inicializa(void)
 	clrscr();
 	
 	textcolor(11);
-	cprintf("Mod Converter 1.5\r\n");
+	cprintf("Mod Converter 1.6\r\n");
 	textcolor(10);
-	cprintf("(C) 2020 Penisoft / MadAxe\r\n");
+	cprintf("(C) 2022 Penisoft / MadAxe\r\n");
 	cprintf("\r\n");
 	
 	textcolor(15);
@@ -1123,11 +1136,11 @@ void carregapat(void)
 
 	/* Percorre todas as Rows */
 	y=0;
-	for (i=pattern*1024; i<((pattern*1024)+1024); i+=16)
+	for (i=pattern*SIZEPATINFOMOD; i<((pattern*SIZEPATINFOMOD)+SIZEPATINFOMOD); i+=SIZEROWMOD)
 	{
 		/* Percorre os 4 Canais */
 		x=0;
-		for(j=0; j<16; j+=4)
+		for(j=0; j<SIZEROWMOD; j+=4)
 		{
 			hi=(int)(patinfo[i+j+0]/16);
 			lo=(int)(patinfo[i+j+0]-hi*16);
@@ -1222,16 +1235,15 @@ void printsam()
 void printsaminfo(void)
 {
 	
-	unsigned long ls,rss,rls;
+	unsigned long rss,rls;
 	
-	ls=(lensample[ny][0]*256+lensample[ny][1])*2;
 	rss=(rpstsample[ny][0]*256+rpstsample[ny][1])*2;
 	rls=(rplnsample[ny][0]*256+rplnsample[ny][1])*2;
 	
 	textcolor(15);
 	gotoxy(55,18);cprintf("%-22s",nomesample[ny]);
 	textcolor(7);
-	gotoxy(64,19);cprintf("%-6u",ls); 
+	gotoxy(64,19);cprintf("%-6u",saminfo[ny].size); 
 	gotoxy(65,20);cprintf("%-2d",ftsample[ny]);
 	gotoxy(63,21);cprintf("%-2d",volsample[ny]);
 	gotoxy(69,22);cprintf("%-6u",rss);
@@ -1242,6 +1254,8 @@ void printsaminfo(void)
 /* Lê o Módulo a partir de um Ficheiro */
 int lemodulo(void)
 {
+
+	int i;
 	
 	/* Abre o Ficheiro para Leitura Binária */
 	fp=fopen(nomefilemod,"rb");
@@ -1271,7 +1285,7 @@ int lemodulo(void)
 	free(fpdata);
 		
 	/* Aloca Memória para as Patterns */
-	patinfo=(char*)calloc(1024*maxpat,sizeof(char));
+	patinfo=(char*)calloc(SIZEPATINFOMOD*maxpat,sizeof(char));
 	
 	/* Aloca Memória para as Patterns FM */
 	patinfofm=(char*)calloc(SIZEPATINFOFM*maxpat,sizeof(char));
@@ -1283,7 +1297,7 @@ int lemodulo(void)
 	patinfoay=(char*)calloc(SIZEPATINFOAY*maxpat,sizeof(char));
 		
 	/* Lê as Patterns do Ficheiro */
-	if (fread(patinfo,1024*maxpat,1,fp)==0)
+	if (fread(patinfo,SIZEPATINFOMOD*maxpat,1,fp)==0)
 	{
 		sprintf(txtsts,"Erro ao Ler Modulo!\0");
 		fclose(fp);
@@ -1291,16 +1305,20 @@ int lemodulo(void)
 	}
 	
 	/* Aloca Memória para os Samples */
-	saminfo=(char*)calloc(sizesamples,sizeof(char));
-	
+	for(i=0; i<31; i++)
+		if (tisample[i])
+			saminfo[i].data=(char*)calloc(saminfo[i].size,sizeof(char));
+		
 	/* Lê os Samples do Ficheiro */
-	if (fread(saminfo,1,sizesamples,fp)==0)
-	{
-		sprintf(txtsts,"Erro ao Ler Modulo!\0");
-		fclose(fp);
-		return(2);
-	}
-	
+	for(i=0; i<31; i++)
+		if (tisample[i])
+			if (fread(saminfo[i].data,1,saminfo[i].size,fp)==0)
+			{
+				sprintf(txtsts,"Erro ao Ler Modulo!\0");
+				fclose(fp);
+				return(2);
+			}
+		
 	sprintf(txtsts,"Modulo Lido com Sucesso!\0");
 	
 	fclose(fp);
@@ -1315,8 +1333,6 @@ void ledados(void)
 
 	int i,j;
 	
-	sizesamples=0;
-	
 	/* Lê o Nome do Módulo*/
 	for (i=0; i<size_nome; i++)
 		nome[i]=fpdata[offs_nome+i];
@@ -1328,17 +1344,12 @@ void ledados(void)
 		for (j=0; j<size_nomesample; j++)
 			nomesample[i][j]=fpdata[offs_samples+(size_nextsample*i)+j];
 		
-		/* Posição do Sample */
-		offsample[i]=sizesamples;
-	
 		/* Tamanho do Sample */
 		lensample[i][0]=fpdata[offs_samples+(size_nextsample*i)+22];
 		lensample[i][1]=fpdata[offs_samples+(size_nextsample*i)+23];
+		saminfo[i].size=(lensample[i][0]*256+lensample[i][1])*2;
 		
-		/* Calcula o Tamanho de todos os Samples */
-		sizesamples+=(lensample[i][0]*256+lensample[i][1])*2;
-		
-		if (lensample[i][0]==0 && lensample[i][1]==0) tisample[i]=0;
+		if (!saminfo[i].size) tisample[i]=0;
 			else tisample[i]=1;
 		
 		/* FineTune do Sample */
@@ -2694,7 +2705,7 @@ void resetcnlmodcnlfm()
 	int i;
 	
 	for (i=0; i<4; i++) cnlmodcnlfm[i]=i;
-	for (i=4; i<9; i++) cnlmodcnlfm[i]=4;
+	for (i=4; i<FMNUNCANAIS; i++) cnlmodcnlfm[i]=4;
 	
 }
 
@@ -3084,11 +3095,11 @@ void convertmodfm(void)
 		
 		/* Percorre as 64 Rows da respetiva Pattern */
 		y=0;
-		for (i=pattern*1024; i<((pattern*1024)+1024); i+=16)
+		for (i=pattern*SIZEPATINFOMOD; i<((pattern*SIZEPATINFOMOD)+SIZEPATINFOMOD); i+=SIZEROWMOD)
 		{
 			/* Percorre os 4 Canais da respetiva Row */
 			x=0;
-			for(j=0; j<16; j+=4)
+			for(j=0; j<SIZEROWMOD; j+=4)
 			{
 				hi=(int)(patinfo[i+j+0]/16);
 				lo=(int)(patinfo[i+j+0]-hi*16);
@@ -3102,7 +3113,7 @@ void convertmodfm(void)
 				efectpar[y][x]=patinfo[i+j+3];
 				
 				/* Percorre todos os Canais FM */
-				for (p=0; p<9; p++)
+				for (p=0; p<FMNUNCANAIS; p++)
 				{
 					
 					/* Verifica se o Canal FM está ativo para o respetivo Canal MOD */				
@@ -3153,7 +3164,7 @@ void convertmodfm(void)
 				x++;
 			}
 			y++;
-			h+=18;
+			h+=SIZEROWFM;
 		}
 	}
 	
@@ -3314,10 +3325,10 @@ void carregapatfm(void)
 	cprintf("Position - %d , Pattern - %d  \n\n",position,pattern);
 
 	y=0;
-	for (i=pattern*SIZEPATINFOFM; i<((pattern*SIZEPATINFOFM)+SIZEPATINFOFM); i+=18)
+	for (i=pattern*SIZEPATINFOFM; i<((pattern*SIZEPATINFOFM)+SIZEPATINFOFM); i+=SIZEROWFM)
 	{
 		x=0;
-		for(j=0; j<18; j+=2)
+		for(j=0; j<SIZEROWFM; j+=2)
 		{
 			
 			/* Byte 0 - Frequência, Oitava e Número do Efeito */
@@ -3366,7 +3377,7 @@ void printcnlonfm(void)
 	else
 	{
 		p=4;
-		f=9;
+		f=FMNUNCANAIS;
 	}
 	
 	j=0;
@@ -3415,7 +3426,7 @@ void printpatfm(void)
 	else
 	{
 		p=4;
-		f=9;
+		f=FMNUNCANAIS;
 	}
 	
 	textbackground(0);
@@ -3485,7 +3496,7 @@ void navegapatfm(void)
 		
 		if (KB_code==KB_S)	/* Para a Música FM */
 		{
-			for (i=0; i<9; i++) stopsomfm(i);
+			for (i=0; i<FMNUNCANAIS; i++) stopsomfm(i);
 			row=0;
 			playfm=0;
 			sprintf(txtsts,"Musica Parada\0");
@@ -3598,7 +3609,7 @@ void playmusicafm(void)
 	{
 		
 		i=row;
-		for (j=0; j<9; j++)
+		for (j=0; j<FMNUNCANAIS; j++)
 		{
 						
 			if (fmefectnum[i][j]==2) salta=1;	/* Salta para a Próxima Pattern */
@@ -3667,7 +3678,7 @@ void playmusicafm(void)
 	else
 	{
 		playfm=0;
-		for (i=0; i<9; i++) stopsomfm(i);
+		for (i=0; i<FMNUNCANAIS; i++) stopsomfm(i);
 		sprintf(txtsts,"Musica Parada\0");
 		printestado();
 		
@@ -3819,7 +3830,7 @@ void printcnlsa(void)
 	
 	int i;
 	
-	for (i=9; i<21; i++)
+	for (i=9; i<15; i++)
 	{
 		gotoxy(3,i);
 		textbackground(0);
@@ -4068,12 +4079,12 @@ void navegacnlsa(void)
 	
 	if (KB_code==KB_UP && cnlsay>0) cnlsay--;		/* Cima */
 				
-	if (KB_code==KB_DOWN && cnlsay<11) cnlsay++;	/* Baixo */
+	if (KB_code==KB_DOWN && cnlsay<5) cnlsay++;	/* Baixo */
 	
 	
 	if (KB_code==KB_HOME || KB_code==KB_PAGE_UP) cnlsay=0;		/* Home */
 							
-	if (KB_code==KB_END || KB_code==KB_PAGE_DOWN) cnlsay=11;	/* End */
+	if (KB_code==KB_END || KB_code==KB_PAGE_DOWN) cnlsay=5;	/* End */
 	
 	if (KB_code==KB_DEL)	/* Delete - Remove o Canal MOD Atribuído ao Canal FM Selecionado */
 	{
@@ -4107,11 +4118,11 @@ void convertmodsa(void)
 		
 		/* Percorre as 64 Rows da respetiva Pattern */
 		y=0;
-		for (i=pattern*1024; i<((pattern*1024)+1024); i+=16)
+		for (i=pattern*SIZEPATINFOMOD; i<((pattern*SIZEPATINFOMOD)+SIZEPATINFOMOD); i+=SIZEROWMOD)
 		{
 			/* Percorre os 4 Canais da respetiva Row */
 			x=0;
-			for(j=0; j<16; j+=4)
+			for(j=0; j<SIZEROWMOD; j+=4)
 			{
 				hi=(int)(patinfo[i+j+0]/16);
 				lo=(int)(patinfo[i+j+0]-hi*16);
@@ -4176,7 +4187,7 @@ void convertmodsa(void)
 				x++;
 			}
 			y++;
-			h+=24;
+			h+=SIZEROWSA;
 		}
 	}
 	
@@ -4302,27 +4313,17 @@ void alteracabconvsa(void)
 	
 	gotoxy(1,3);
 	cprintf("Patterns SAA1099 : ");
-	if (menu==0)
-	{
+//	if (menu==0)
+//	{
 		textcolor(10);
 		cprintf("Canais 0 - 5");
-		if (numsaacnl==12)
-		{
-			textcolor(13);
-			cprintf("   (ALT para Canais 6 - 11)");	
-		}
-	}
+/*	}
 	else
 	{
 		textcolor(10);
 		cprintf("Canais 6 - 11");
-		if (numsaacnl==12)
-		{
-			textcolor(13);
-			cprintf("  (ALT para Canais 0 - 5) ");	
-		}
 	}
-	
+*/	
 	printcnlonsa();
 	
 }
@@ -4343,10 +4344,10 @@ void carregapatsa(void)
 	cprintf("Position - %d , Pattern - %d  \n\n",position,pattern);
 
 	y=0;
-	for (i=pattern*SIZEPATINFOSA; i<((pattern*SIZEPATINFOSA)+SIZEPATINFOSA); i+=24)
+	for (i=pattern*SIZEPATINFOSA; i<((pattern*SIZEPATINFOSA)+SIZEPATINFOSA); i+=SIZEROWSA)
 	{
 		x=0;
-		for(j=0; j<24; j+=2)
+		for(j=0; j<SIZEROWSA; j+=2)
 		{
 			
 			/* Byte 0 - Frequência, Oitava e Número do Efeito */
@@ -4387,16 +4388,8 @@ void printcnlonsa(void)
 	int i,j;
 	int p,f;
 
-	if (menu==0)
-	{
-		p=0;
-		f=6;
-	}
-	else
-	{
-		p=6;
-		f=SAANUNCANAIS;
-	}
+	p=0;
+	f=SAANUNCANAIS;
 	
 	j=0;
 	for (i=p; i<f; i++)
@@ -4430,16 +4423,8 @@ void printpatsa(void)
 	int p,f;
 	char o;
 	
-	if (menu==0)
-	{
-		p=0;
-		f=6;
-	}
-	else
-	{
-		p=6;
-		f=SAANUNCANAIS;
-	}
+	p=0;
+	f=SAANUNCANAIS;
 	
 	textbackground(0);
 	textcolor(7);
@@ -4478,7 +4463,8 @@ void navegapatsa(void)
 					{
 						sisa=playenvlsa[i];
 						envelopsa(i);
-						criasomsa(i,freqsa[i]);
+					//	criasomsa(i,freqsa[i]);
+						setvolsa(i);
 					}
 
 				playsaend=letempo();
@@ -4525,16 +4511,6 @@ void navegapatsa(void)
 			printestado();
 		}
 		
-		if (KB_code==KB_TAB)
-		{
-			if (numsaacnl==12)
-			{
-				menu=1-menu;
-				alteracabconvsa();
-				carregapatsa();
-			}
-		}
-			
 		if (KB_code==KB_F2) estado=0;
 		
 		if (KB_code==KB_F3) estado=1;
@@ -4612,27 +4588,9 @@ void navegapatsa(void)
 		printpatsa();
 		
 		/* Canais ON/OFF */
-		if (KB_code>=KB_1 && KB_code<=KB_9)
+		if (KB_code>=KB_1 && KB_code<=KB_6)
 		{
 			cnlonsa[KB_code-48-1]=1-cnlonsa[KB_code-48-1];
-			printcnlonsa();
-		}
-		
-		if (KB_code==KB_0)
-		{
-			cnlonsa[9]=1-cnlonsa[9];
-			printcnlonsa();
-		}
-		
-		if (KB_code==KB_A)
-		{
-			cnlonsa[10]=1-cnlonsa[10];
-			printcnlonsa();
-		}
-		
-		if (KB_code==KB_B)
-		{
-			cnlonsa[11]=1-cnlonsa[11];
 			printcnlonsa();
 		}
 		
@@ -4723,7 +4681,7 @@ void playmusicasa(void)
 	}
 	else
 	{
-		for (i=0; i<9; i++) stopsomsa(i);
+		for (i=0; i<SAANUNCANAIS; i++) stopsomsa(i);
 		row=0;
 		playsa=0;
 		sprintf(txtsts,"Musica Parada\0");
@@ -4760,7 +4718,7 @@ void resetcnlmodcnlay()
 {
 	int i;
 	
-	for (i=0; i<3; i++) cnlmodcnlay[i]=i;
+	for (i=0; i<AYNUNCANAIS; i++) cnlmodcnlay[i]=i;
 	
 }
 
@@ -4908,6 +4866,7 @@ void navegaay(void)
 			{
 				envelopay(0);
 				criasomay(0,freqay[0]);
+			//	setvolay(0);
 			}
 			
 		}
@@ -5169,13 +5128,13 @@ void convertmoday(void)
 		
 		/* Percorre as 64 Rows da respetiva Pattern */
 		y=0;
-		for (i=pattern*1024; i<((pattern*1024)+1024); i+=16)
+		for (i=pattern*SIZEPATINFOMOD; i<((pattern*SIZEPATINFOMOD)+SIZEPATINFOMOD); i+=SIZEROWMOD)
 		{
 			/* Percorre os 4 Canais da respetiva Row */
 			x=0;
 			ayefect=0;					/* Número do Efeito		*/
 			ayfectpar=0;				/* Parâmetro do Efeito	*/
-			for(j=0; j<16; j+=4)
+			for(j=0; j<SIZEROWMOD; j+=4)
 			{
 				hi=(int)(patinfo[i+j+0]/16);
 				lo=(int)(patinfo[i+j+0]-hi*16);
@@ -5189,7 +5148,7 @@ void convertmoday(void)
 				efectpar[y][x]=patinfo[i+j+3];
 				
 				/* Percorre todos os Canais AY-3-8912 */
-				for (p=0; p<3; p++)
+				for (p=0; p<AYNUNCANAIS; p++)
 				{
 					
 					/* Verifica se o Canal AY-3-8912 está ativo para o respetivo Canal MOD */	
@@ -5258,7 +5217,7 @@ void convertmoday(void)
 				x++;
 			}
 			y++;
-			h+=4;
+			h+=SIZEROWAY;
 		}
 	}
 	
@@ -5411,10 +5370,10 @@ void carregapatay(void)
 	cprintf("Position - %d , Pattern - %d  \n\n",position,pattern);
 
 	y=0;
-	for (i=pattern*SIZEPATINFOAY; i<((pattern*SIZEPATINFOAY)+SIZEPATINFOAY); i+=4)
+	for (i=pattern*SIZEPATINFOAY; i<((pattern*SIZEPATINFOAY)+SIZEPATINFOAY); i+=SIZEROWAY)
 	{
 		x=0;
-		for(j=0; j<3; j++)
+		for(j=0; j<AYNUNCANAIS; j++)
 		{
 			
 			/* Byte 0,1,2 - Frequência, Oitava e Low Número do Instrumento */
@@ -5486,7 +5445,7 @@ void printcnlonay(void)
 	if (menu==0)
 	{
 		p=0;
-		f=3;
+		f=AYNUNCANAIS;
 	}
 		
 	j=0;
@@ -5524,7 +5483,7 @@ void printpatay(void)
 	if (menu==0)
 	{
 		p=0;
-		f=3;
+		f=AYNUNCANAIS;
 	}
 		
 	textbackground(0);
@@ -5559,12 +5518,13 @@ void navegapatay(void)
 		{
 			if (playay==1)
 			{
-				for (i=0; i<3; i++)
+				for (i=0; i<AYNUNCANAIS; i++)
 					if (playenvlay[i]!=0)
 					{
 						siay=playenvlay[i];
 						envelopay(i);
-						criasomay(i,freqay[i]);
+					//	criasomay(i,freqay[i]);
+						setvolay(i);
 					}
 
 				playayend=letempo();
@@ -5604,7 +5564,7 @@ void navegapatay(void)
 		
 		if (KB_code==KB_S) /* Para a Música AY */
 		{
-			for (i=0; i<3; i++) stopsomay(i);
+			for (i=0; i<AYNUNCANAIS; i++) stopsomay(i);
 			row=0;
 			playay=0;
 			sprintf(txtsts,"Musica Parada\0");
@@ -5712,7 +5672,7 @@ void playmusicaay(void)
 	{
 		
 		i=row;
-		for (j=0; j<3; j++)
+		for (j=0; j<AYNUNCANAIS; j++)
 		{
 						
 			if (ayefectnum[i][j]==2) salta=1;			/* Salta para a Próxima Pattern */
@@ -5972,7 +5932,7 @@ int readdsp(void)
 /* Envia o som para o DSP */
 void playsom(void)
 {
-
+	
 	int j;
 	unsigned long i,ls;
 	
@@ -5982,11 +5942,11 @@ void playsom(void)
 	writedsp(0xD1); /* Liga o Speaker */
 	
 	ls=(lensample[ny][0]*256+lensample[ny][1])*2;
-	
+		
 	for (i=0; i<ls; i++)
 	{
 		writedsp(0x10);  						/* Indica ao DSP para enviar dados para o Speaker  */
-		writedsp(saminfo[offsample[ny]+i]-128);		/* Envia o Sample para o Speaker		           */
+		writedsp((saminfo[ny].data[i])-128);	/* Envia o Sample para o Speaker */
 		
 		for (j=0; j<100; j++){}					/* Executa uma "Pausa" */
 	}
@@ -6243,9 +6203,26 @@ void precriasomsa(unsigned char canal,int freqindex)
 	
 	getenvlsa(canal);
 	
-	if (playenvlsa[canal]!=0) freqsa[canal]=freqindex;
-	else criasomsa(canal,freqindex);
+/*	if (playenvlsa[canal]!=0) freqsa[canal]=freqindex;
+	else criasomsa(canal,freqindex); */
 	
+	criasomsa(canal,freqindex);
+	
+}
+
+/* Apenas atualiza o Volume dos Canais SAA1099 em caso de Envelope */
+void setvolsa(unsigned char canal)
+{
+	
+	if (cnlonsa[canal]==1)
+	{
+		if (canal==0 || canal==2 || canal==4)						/* Estéreo */
+				writesa1(0x00+canal,volumesa[canal]*16);
+			else
+				writesa1(0x00+canal,volumesa[canal]);
+	}
+	else writesa1(0x00+canal,0);
+				
 }
 
 /* Produz um Som SAA1099 */
@@ -6254,169 +6231,84 @@ void criasomsa(unsigned char canal,int freqindex)
 	
 	unsigned char oct;
 	
-	if (canal<6)
+	if (cnlonsa[canal]==1)
 	{
+		if (canal==0 || canal==2 || canal==4)			/* Volume */
+			writesa1(0x00+canal,volumesa[canal]*16);
+		else
+			writesa1(0x00+canal,volumesa[canal]);
+	}
+	else writesa1(0x00+canal,0);
 		
-		if (cnlonsa[canal]==1)
+	writesa1(0x08+canal,notassa[freqindex]); 			/* Frequência */
+		
+	if (canal==0 || canal==1)
+	{
+		if (canal==0)
 		{
-		//	writesa1(0x00+canal,volumesa[canal]*16+volumesa[canal]);	/* Volume */
-			if (canal==0 || canal==2 || canal==4)
-				writesa1(0x00+canal,volumesa[canal]*16);
-			else
-				writesa1(0x00+canal,volumesa[canal]);
+			hi=(int)(octsa[0][0]/16);
+			oct=hi*16+oitavasa[canal];
 		}
-		else writesa1(0x00+canal,0);
-		
-		writesa1(0x08+canal,notassa[freqindex]); 			/* Frequência */
-		
-		if (canal==0 || canal==1)
+		else
 		{
-			if (canal==0)
-			{
-				hi=(int)(octsa[0][0]/16);
-				oct=hi*16+oitavasa[canal];
-			}
-			else
-			{
-				hi=(int)(octsa[0][0]/16);
-				lo=(int)(octsa[0][0]-hi*16);
-				oct=oitavasa[canal]*16+lo;
-			}
-			octsa[0][0]=oct;
-			writesa1(0x010,octsa[0][0]);  			/* Oitava */
+			hi=(int)(octsa[0][0]/16);
+			lo=(int)(octsa[0][0]-hi*16);
+			oct=oitavasa[canal]*16+lo;
 		}
+		octsa[0][0]=oct;
+		writesa1(0x010,octsa[0][0]);  			/* Oitava */
+	}
 		
-		if (canal==2 || canal==3)
+	if (canal==2 || canal==3)
+	{
+		if (canal==2)
 		{
-			if (canal==2)
-			{
-				hi=(int)(octsa[0][1]/16);
-				oct=hi*16+oitavasa[canal];
-			}
-			else
-			{
-				hi=(int)(octsa[0][1]/16);
-				lo=(int)(octsa[0][1]-hi*16);
-				oct=oitavasa[canal]*16+lo;
-			}
-			octsa[0][1]=oct;
-			writesa1(0x011,octsa[0][1]);  			/* Oitava */
+			hi=(int)(octsa[0][1]/16);
+			oct=hi*16+oitavasa[canal];
 		}
-		
-		if (canal==4 || canal==5)
+		else
 		{
-			if (canal==4)
-			{
-				hi=(int)(octsa[0][2]/16);
-				oct=hi*16+oitavasa[canal];
-			}
-			else
-			{
-				hi=(int)(octsa[0][2]/16);
-				lo=(int)(octsa[0][2]-hi*16);
-				oct=oitavasa[canal]*16+lo;
-			}
-			octsa[0][2]=oct;
-			writesa1(0x012,octsa[0][2]);  			/* Oitava */
+			hi=(int)(octsa[0][1]/16);
+			lo=(int)(octsa[0][1]-hi*16);
+			oct=oitavasa[canal]*16+lo;
 		}
+		octsa[0][1]=oct;
+		writesa1(0x011,octsa[0][1]);  			/* Oitava */
+	}
 		
-		if (instregsa[sisa].freqenb==1) freqenbsa=setbit(freqenbsa,canal+1); /* Frequência Enable */
-		else freqenbsa=clearbit(freqenbsa,canal+1);
+	if (canal==4 || canal==5)
+	{
+		if (canal==4)
+		{
+			hi=(int)(octsa[0][2]/16);
+			oct=hi*16+oitavasa[canal];
+		}
+		else
+		{
+			hi=(int)(octsa[0][2]/16);
+			lo=(int)(octsa[0][2]-hi*16);
+			oct=oitavasa[canal]*16+lo;
+		}
+		octsa[0][2]=oct;
+		writesa1(0x012,octsa[0][2]);  			/* Oitava */
+	}
 		
-		if (instregsa[sisa].noiseenb==1) noiseenbsa=setbit(noiseenbsa,canal+1); /* Noise Enable */
-		else noiseenbsa=clearbit(noiseenbsa,canal+1);
+	if (instregsa[sisa].freqenb==1) freqenbsa=setbit(freqenbsa,canal+1); /* Frequência Enable */
+	else freqenbsa=clearbit(freqenbsa,canal+1);
 		
-		writesa1(0x014,freqenbsa);  		/* Frequência Enable */
-		writesa1(0x015,noiseenbsa);  		/* Noise Enable */
+	if (instregsa[sisa].noiseenb==1) noiseenbsa=setbit(noiseenbsa,canal+1); /* Noise Enable */
+	else noiseenbsa=clearbit(noiseenbsa,canal+1);
+		
+	writesa1(0x014,freqenbsa);  		/* Frequência Enable */
+	writesa1(0x015,noiseenbsa);  		/* Noise Enable */
 				
-	}
-	else
-	{
-		
-		if (cnlonsa[canal]==1)
-		{
-		//	writesa7(0x00+canal-6,volumesa[canal]*16+volumesa[canal]);	/* Volume */
-			if (canal==6 || canal==8 || canal==10)
-				writesa7(0x00+canal-6,volumesa[canal]*16);
-			else
-				writesa7(0x00+canal-6,volumesa[canal]);
-		}
-		else writesa7(0x00+canal-6,0);
-		
-		writesa7(0x08+canal-6,notassa[freqindex]); 			/* Frequência */
-		
-		if (canal==6 || canal==7)
-		{
-			if (canal==6)
-			{
-				hi=(int)(octsa[0][0]/16);
-				oct=hi*16+oitavasa[canal];
-			}
-			else
-			{
-				hi=(int)(octsa[0][0]/16);
-				lo=(int)(octsa[0][0]-hi*16);
-				oct=oitavasa[canal]*16+lo;
-			}
-			octsa[0][0]=oct;
-			writesa7(0x010,octsa[0][0]);  			/* Oitava */
-		}
-		
-		if (canal==8 || canal==9)
-		{
-			if (canal==8)
-			{
-				hi=(int)(octsa[0][1]/16);
-				oct=hi*16+oitavasa[canal];
-			}
-			else
-			{
-				hi=(int)(octsa[0][1]/16);
-				lo=(int)(octsa[0][1]-hi*16);
-				oct=oitavasa[canal]*16+lo;
-			}
-			octsa[0][1]=oct;
-			writesa7(0x011,octsa[0][1]);  			/* Oitava */
-		}
-		
-		if (canal==10 || canal==11)
-		{
-			if (canal==10)
-			{
-				hi=(int)(octsa[0][2]/16);
-				oct=hi*16+oitavasa[canal];
-			}
-			else
-			{
-				hi=(int)(octsa[0][2]/16);
-				lo=(int)(octsa[0][2]-hi*16);
-				oct=oitavasa[canal]*16+lo;
-			}
-			octsa[0][2]=oct;
-			writesa7(0x012,octsa[0][2]);  			/* Oitava */
-		}
-		
-		if (instregsa[sisa].freqenb==1) freqenbsa=setbit(freqenbsa,canal-5); /* Frequência Enable */
-		else freqenbsa=clearbit(freqenbsa,canal-1);
-		
-		if (instregsa[sisa].noiseenb==1) noiseenbsa=setbit(noiseenbsa,canal-5); /* Noise Enable */
-		else noiseenbsa=clearbit(noiseenbsa,canal-5);
-		
-		writesa7(0x014,freqenbsa);  		/* Frequência Enable */
-		writesa7(0x015,noiseenbsa);  		/* Noise Enable */
-		
-	}
-	
 }
 
 /* Desliga o Canal SAA1099 */
 void stopsomsa(int canal)
 {
 
-	if (canal<6)
-		writesa1(0x00+canal,0);		/* Volume  */
-	else
-		writesa7(0x00+canal-6,0);		/* Volume  */
+	writesa1(0x00+canal,0);		/* Volume  */
 	
 	sprintf(txtsts,"Som Desligado\0");
 	printestado();
@@ -6522,9 +6414,22 @@ void precriasomay(unsigned char canal,int freqindex)
 	
 	getenvlay(canal);
 	
-	if (playenvlay[canal]!=0) freqay[canal]=freqindex;
-	else criasomay(canal,freqindex);
+//	if (playenvlay[canal]!=0) freqay[canal]=freqindex;
+//	else criasomay(canal,freqindex);
 	
+	criasomay(canal,freqindex);
+	
+}
+
+/* Apenas atualiza o Volume dos Canais AY-3-8912 em caso de Envelope */
+void setvolay(unsigned char canal)
+{
+	
+	if (cnlonay[canal]==1)
+			writesa1(0x00+canal,volumeay[canal]*16+volumeay[canal]);	/* Mono */
+	else
+		writesa1(0x00+canal,0);
+				
 }
 
 /* Produz um Som AY-3-8912 */
