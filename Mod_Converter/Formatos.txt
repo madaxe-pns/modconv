@@ -46,7 +46,7 @@ Posição - Conteúdo - Tamanho
 		 EE=3 - Volume do Canal
 			Volume é definido por EP
 
-150 + Patterns - Instrumentos - 31*32 = 992 Bytes
+150 + Patterns - Instrumentos - 31 * 32 = 992 Bytes
 150 + Patterns + 992 - Oitavas - 31 Bytes
 
 
@@ -61,11 +61,11 @@ Posição - Conteúdo - Tamanho
 
 22 - SongPos - 128 Bytes
 
-150 - Patterns - 1.536 * MaxPat (se MaxPat=10 então Patterns = 1.536 * 10 = 15.360 Bytes)
+150 - Patterns - 768 * MaxPat (se MaxPat=10 então Patterns = 768 * 10 = 7.680 Bytes)
 
-   Cada Pattern: 24 Bytes * 64 Rows = 1.536 Bytes
+   Cada Pattern: 12 Bytes * 64 Rows = 768 Bytes
 
-   Cada Row: 24 Bytes (2 Bytes por Canal * 12 Canais)
+   Cada Row: 12 Bytes (2 Bytes por Canal * 6 Canais)
 
       Byte 0 - EE OO FFFF - Número do Efeito, Oitava e Nota - Canal 1
       Byte 1 - EP IIIII - Parâmetro do Efeito , Instrumento - Canal 1
@@ -73,8 +73,8 @@ Posição - Conteúdo - Tamanho
 	...
 	...
 	...
-      Byte 22 - EE OO FFFF - Número do Efeito, Oitava e Nota - Canal 12
-      Byte 23 - EP IIIII - Parâmetro do Efeito , Instrumento - Canal 12
+      Byte 22 - EE OO FFFF - Número do Efeito, Oitava e Nota - Canal 6
+      Byte 23 - EP IIIII - Parâmetro do Efeito , Instrumento - Canal 6
 
 	Efeitos: EE=0 - Número do Instrumento
 		     	O Número do Instrumento é definido por IIIII
@@ -89,7 +89,7 @@ Posição - Conteúdo - Tamanho
 		 EE=3 - Volume do Canal
 			Volume é definido por EP
 
-150 + Patterns - Instrumentos - 31*868 = 868 Bytes
+150 + Patterns - Instrumentos - 31 * 28 = 868 Bytes
 150 + Patterns + 868 - Oitavas - 31 Bytes
 
 
@@ -127,7 +127,7 @@ Posição - Conteúdo - Tamanho
 		 EE=2 - Salta para a Posição Seguinte
 			Neste Efeito não há Número do Instrumento
 
-150 + Patterns - Instrumentos - 31*8 = 248 Bytes
+150 + Patterns - Instrumentos - 31 * 8 = 248 Bytes
 150 + Patterns + 248 - Oitavas - 31 Bytes
 
 
