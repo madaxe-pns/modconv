@@ -1,11 +1,16 @@
-/***********************************************/
-/*									           */		
-/*     	     AY-3-8912 / YM2149F		       */
-/*										       */
-/*      ZX Spectrum 128K, Atari ST, MSX        */
-/*										       */
-/***********************************************/
+/*
+/*   AY Instrument Creator 1.5
+/*
+/*   AY-3-8912 / YM2149F
+/*   ZX Spectrum 128K, Atari ST, MSX
+/*
+/*   Para compilar: tcc AyIntCrt.c
+/*
+/*  (C) 2022 Penisoft / MadAxe
+/*
+*/
 
+/* Includes */
 #include <stdio.h>
 #include <dos.h>
 #include <conio.h>
@@ -252,9 +257,9 @@ void screenclose(void)
 	clrscr();
 	
 	textcolor(11);
-	cprintf("AY-3-8912 Instrument Creator 1.3\r\n");
+	cprintf("AY-3-8912 Instrument Creator 1.5\r\n");
 	textcolor(10);
-	cprintf("(C) 2020 Penisoft / MadAxe\r\n");
+	cprintf("(C) 2022 Penisoft / MadAxe\r\n");
 
 	_setcursortype(_NORMALCURSOR);
 	
@@ -269,9 +274,9 @@ int inicializa(void)
 	clrscr();
 	
 	textcolor(11);
-	cprintf("AY-3-8912 Instrument Creator 1.3\r\n");
+	cprintf("AY-3-8912 Instrument Creator 1.5\r\n");
 	textcolor(10);
-	cprintf("(C) 2020 Penisoft / MadAxe\r\n\r\n");
+	cprintf("(C) 2022 Penisoft / MadAxe\r\n\r\n");
 	
 	textcolor(15);
 
@@ -731,7 +736,8 @@ void printval(void)
 	textcolor(7);
 	
 	/* Posição do Instrumento no Bank */
-	gotoxy(64,5);cprintf("%3d",sy);
+//	gotoxy(64,5);cprintf("%3d",sy);
+	gotoxy(64,5);cprintf("%3d",instregay[sy].num);
 	
 	/* Valores */
 	gotoxy(44,7);cprintf("%3d",instregay[sy].freqenb);
@@ -976,6 +982,8 @@ void navegainstay(void)
 void navegaval(void)
 {
 	
+	int i;
+	
 /*	if (KB_code==KB_LEFT && vox>0)	/* Esquerda 
 	{
 		if (voed==1) updateval();
@@ -1019,7 +1027,10 @@ void navegaval(void)
 		textbackground(4);
 		textcolor(14);
 		
-		sprintf(vron,instregay[sy].nome);
+	//	sprintf(vron,instregay[sy].nome);
+		for (i=0; i<20; i++) vron[i]=instregay[sy].nome[i];
+		
+		
 		gotoxy(35,5);cprintf("%-20s",vron);
 		
 		noc=0;
@@ -1236,13 +1247,17 @@ void inputnome(void)
 void updatenome(void)
 {
 
-	if (noc==0) sprintf(vron,"Vazio-%d\0'",sy);
+	int i;
+
+//	if (noc==0) sprintf(vron,"Vazio-%d\0'",sy);
+	if (noc==0) sprintf(vron,"Vazio");
 	else vron[noc]='\0';
 	
 	noed=0;
 	noc=0;
 	
-	sprintf(instregay[sy].nome,vron);
+//	sprintf(instregay[sy].nome,vron);
+	for (i=0; i<20; i++) instregay[sy].nome[i]=vron[i];
 
 	textbackground(10);
 	textcolor(15);
@@ -1393,13 +1408,14 @@ int leayplayer(void)
 void insereinstay(int inst)
 {
 	
-	int i;
+	int i,j;
 	
 	/* Roda os restantes Instrumentos AY-3-8912 uma posição para Cima */
-	for (i=128; i>inst; i--)
+	for (i=127; i>inst; i--)
 	{
-		sprintf(instregay[i].nome,instregay[i-1].nome);
-		instregay[i].num=instregay[i-1].num;
+		for (j=0; j<20; j++) instregay[i].nome[j]=instregay[i-1].nome[j];
+	//	instregay[i].num=instregay[i-1].num;
+		instregay[i].num=i;
 		instregay[i].freqenb=instregay[i-1].freqenb;
 		instregay[i].noiseenb=instregay[i-1].noiseenb;
 		instregay[i].attack=instregay[i-1].attack;
@@ -1410,6 +1426,7 @@ void insereinstay(int inst)
 	}
 	
 	/* Insere o Novo Instrumento AY-3-8912 */
+	for (j=0; j<20; j++) instregay[inst].nome[j]=0;
 	sprintf(instregay[inst].nome,"vazio\0");
 	instregay[inst].num=inst;
 	instregay[i].freqenb=0;
@@ -1431,13 +1448,15 @@ void insereinstay(int inst)
 /* Apaga Instrumento AY-3-8912 */
 void apagainstay(int inst)
 {
-	int i;
+	int i,j;
 	
 	/* Roda os restantes Instrumentos AY-3-8912 uma posição para Baixo */
 	for (i=inst; i<127; i++)
 	{
-		sprintf(instregay[i].nome,instregay[i+1].nome);
-		instregay[i].num=instregay[i+1].num;
+	//	sprintf(instregay[i].nome,instregay[i+1].nome);
+		for (j=0; j<20; j++) instregay[i].nome[j]=instregay[i+1].nome[j];
+	//	instregay[i].num=instregay[i+1].num;
+		instregay[i].num=i;
 		instregay[i].freqenb=instregay[i+1].freqenb;
 		instregay[i].noiseenb=instregay[i+1].noiseenb;
 		instregay[i].attack=instregay[i+1].attack;
@@ -1448,6 +1467,7 @@ void apagainstay(int inst)
 	}
 	
 	/* "Zera" a Posição 127 */
+	for (j=0; j<20; j++) instregay[127].nome[j]=0;
 	sprintf(instregay[127].nome,"vazio\0");
 	instregay[127].num=127;
 	instregay[127].freqenb=0;
@@ -1514,15 +1534,14 @@ void criainst()
 	}
 */
 
-	for (i=15; i<128; i++)
+/*	for (i=15; i<128; i++)
 	{
 		sprintf(instregay[i].nome,"vazio\0",i);
 	}
-	
-/*	for (i=0; i<128; i++)
+*/	
+	for (i=0; i<128; i++)
 	{
 		instregay[i].num=i;
 	}
-*/
 
 }
