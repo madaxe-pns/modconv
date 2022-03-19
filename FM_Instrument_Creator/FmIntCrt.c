@@ -1,13 +1,16 @@
-/***********************************************/
-/*									           */
-/*  		FM Instrument Creator 1.7  		   */
-/*										       */
-/* ADLIB / SOUNDBLASTER - Yamaha YM3812 - OPL2 */
-/*										       */
-/* 		   (C) 2020 Penisoft / MadAxe		   */
-/*									           */		
-/***********************************************/
+/*
+/*
+/*  FM Instrument Creator 1.8
+/*
+/*  ADLIB / SOUNDBLASTER - Yamaha YM3812 - OPL2
+/*
+/*  Para compilar: tcc FmIntCrt.c
+/*
+/*  (C) 2022 Penisoft / MadAxe
+/*
+*/
 
+/* Includes */
 #include <stdio.h>
 #include <dos.h>
 #include <conio.h>
@@ -263,9 +266,9 @@ void screenclose(void)
 	clrscr();
 	
 	textcolor(11);
-	cprintf("Instrument Creator 1.7\r\n");
+	cprintf("Instrument Creator 1.8\r\n");
 	textcolor(10);
-	cprintf("(C) 2020 Penisoft / MadAxe\r\n");
+	cprintf("(C) 2022 Penisoft / MadAxe\r\n");
 	
 	_setcursortype(_NORMALCURSOR);
 	
@@ -280,9 +283,9 @@ int inicializa(void)
 	clrscr();
 	
 	textcolor(11);
-	cprintf("Instrument Creator 1.7\r\n");
+	cprintf("Instrument Creator 1.8\r\n");
 	textcolor(10);
-	cprintf("(C) 2020 Penisoft / MadAxe\r\n\r\n");
+	cprintf("(C) 2022 Penisoft / MadAxe\r\n\r\n");
 	
 	textcolor(15);
 
@@ -294,6 +297,8 @@ int inicializa(void)
 		cprintf("%s\r\n",txtsts);
 		return(f);
 	}
+	
+//	criainst();
 	
 	resetfm();
 	initfm();
@@ -792,7 +797,7 @@ void printval(void)
 	textcolor(7);
 	
 	/* Posição do Instrumento no Bank */
-	gotoxy(64,5);cprintf("%3d",sy);
+	gotoxy(64,5);cprintf("%3d",instreg[sy].num);
 	
 	/* Valores dos Operadores */
 	gotoxy(44,7);cprintf("%3d",o1r2t);gotoxy(72,7);cprintf("%3d",o2r2t);
@@ -1103,6 +1108,8 @@ void navegainstfm(void)
 void navegaval(void)
 {
 	
+	int i;
+	
 	if (KB_code==KB_LEFT && vox>0)	/* Esquerda */
 	{
 		if (voed==1) updateval();
@@ -1146,7 +1153,8 @@ void navegaval(void)
 		textbackground(4);
 		textcolor(14);
 		
-		sprintf(vron,instreg[sy].nome);
+	//	sprintf(vron,instreg[sy].nome);
+		for (i=0; i<20; i++) vron[i]=instreg[sy].nome[i];
 		gotoxy(35,5);cprintf("%-20s",vron);
 		
 		noc=0;
@@ -1163,6 +1171,8 @@ void navegaval(void)
 /* Navega nos Registos dos Operadores */
 void navegareg(void)
 {
+	
+	int i;
 	
 	if (KB_code==KB_LEFT && rox>0)	/* Esquerda */
 	{
@@ -1214,7 +1224,8 @@ void navegareg(void)
 		textbackground(4);
 		textcolor(14);
 		
-		sprintf(vron,instreg[sy].nome);
+	//	sprintf(vron,instreg[sy].nome);
+		for (i=0; i<20; i++) vron[i]=instreg[sy].nome[i];
 		gotoxy(35,5);cprintf("%-20s",vron);
 		
 		noc=0;
@@ -1702,14 +1713,18 @@ void inputnome(void)
 /* Coloca o Novo Nome no Instrumento FM */
 void updatenome(void)
 {
+	
+	int i;
 
-	if (noc==0) sprintf(vron,"Vazio-%d\0'",sy);
+//	if (noc==0) sprintf(vron,"Vazio-%d\0'",sy);
+	if (noc==0) sprintf(vron,"Vazio");
 	else vron[noc]='\0';
 	
 	noed=0;
 	noc=0;
 	
-	sprintf(instreg[sy].nome,vron);
+//	sprintf(instreg[sy].nome,vron);
+	for (i=0; i<20; i++) instreg[sy].nome[i]=vron[i];
 
 	textbackground(10);
 	textcolor(15);
@@ -1783,13 +1798,14 @@ int leinstfm(void)
 void insereinstfm(int inst)
 {
 	
-	int i;
+	int i,j;
 	
 	/* Roda os restantes Instrumentos FM uma posição para Cima */
-	for (i=128; i>inst; i--)
+	for (i=127; i>inst; i--)
 	{
-		sprintf(instreg[i].nome,instreg[i-1].nome);
-		instreg[i].num=instreg[i-1].num;
+	//	sprintf(instreg[i].nome,instreg[i-1].nome);
+		for (j=0; j<20; j++) instreg[i].nome[j]=instreg[i-1].nome[j];
+		instreg[i].num=i;
 		instreg[i].regc0=instreg[i-1].regc0;
 		instreg[i].op1reg2=instreg[i-1].op1reg2;
 		instreg[i].op1reg4=instreg[i-1].op1reg4;
@@ -1804,6 +1820,7 @@ void insereinstfm(int inst)
 	}
 	
 	/* Insere o Novo Instrumento FM */
+	for (j=0; j<20; j++) instreg[inst].nome[j]=0;
 	sprintf(instreg[inst].nome,"vazio\0");
 	instreg[inst].num=inst;
 	instreg[inst].regc0=0;
@@ -1831,13 +1848,15 @@ void insereinstfm(int inst)
 /* Apaga Instrumento FM */
 void apagainstfm(int inst)
 {
-	int i;
+	int i,j;
 	
 	/* Roda os restantes Instrumentos FM uma posição para Baixo */
 	for (i=inst; i<127; i++)
 	{
-		sprintf(instreg[i].nome,instreg[i+1].nome);
-		instreg[i].num=instreg[i+1].num;
+	//	sprintf(instreg[i].nome,instreg[i+1].nome);
+		for (j=0; j<20; j++) instreg[i].nome[j]=instreg[i+1].nome[j];
+	//	instreg[i].num=instreg[i+1].num;
+		instreg[i].num=i;
 		instreg[i].regc0=instreg[i+1].regc0;
 		instreg[i].op1reg2=instreg[i+1].op1reg2;
 		instreg[i].op1reg4=instreg[i+1].op1reg4;
@@ -1852,6 +1871,7 @@ void apagainstfm(int inst)
 	}
 	
 	/* "Zera" a Posição 127 */
+	for (j=0; j<20; j++) instreg[127].nome[j]=0;
 	sprintf(instreg[127].nome,"vazio\0");
 	instreg[127].num=127;
 	instreg[127].regc0=0;
@@ -1947,15 +1967,15 @@ void criainst()
 	}
 
 */
-	for (i=13; i<128; i++)
+/*	for (i=13; i<128; i++)
 	{
 		sprintf(instreg[i].nome,"vazio\0",i);
 	}
-	
-/*	for (i=0; i<128; i++)
+*/	
+	for (i=0; i<128; i++)
 	{
 		instreg[i].num=i;
 	}
-*/
+
 
 }
