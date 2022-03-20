@@ -982,8 +982,6 @@ void navegainstay(void)
 void navegaval(void)
 {
 	
-	int i;
-	
 /*	if (KB_code==KB_LEFT && vox>0)	/* Esquerda 
 	{
 		if (voed==1) updateval();
@@ -1027,8 +1025,7 @@ void navegaval(void)
 		textbackground(4);
 		textcolor(14);
 		
-	//	sprintf(vron,instregay[sy].nome);
-		for (i=0; i<20; i++) vron[i]=instregay[sy].nome[i];
+		memcpy(vron,instregay[sy].nome,20);
 		gotoxy(35,5);cprintf("%-20s",vron);
 		
 		noc=0;
@@ -1245,17 +1242,13 @@ void inputnome(void)
 void updatenome(void)
 {
 
-	int i;
-
-//	if (noc==0) sprintf(vron,"Vazio-%d\0'",sy);
-	if (noc==0) sprintf(vron,"Vazio");
+	if (noc==0) sprintf(vron,"vazio");
 	else vron[noc]='\0';
 	
 	noed=0;
 	noc=0;
 	
-//	sprintf(instregay[sy].nome,vron);
-	for (i=0; i<20; i++) instregay[sy].nome[i]=vron[i];
+	memcpy(instregay[sy].nome,vron,20);
 
 	textbackground(10);
 	textcolor(15);
@@ -1406,13 +1399,12 @@ int leayplayer(void)
 void insereinstay(int inst)
 {
 	
-	int i,j;
+	int i;
 	
 	/* Roda os restantes Instrumentos AY-3-8912 uma posição para Cima */
 	for (i=127; i>inst; i--)
 	{
-	//	instregay[i].num=instregay[i-1].num;
-		for (j=0; j<20; j++) instregay[i].nome[j]=instregay[i-1].nome[j];
+		memcpy(instregay[i].nome,instregay[i-1].nome,20);
 		instregay[i].num=i;
 		instregay[i].freqenb=instregay[i-1].freqenb;
 		instregay[i].noiseenb=instregay[i-1].noiseenb;
@@ -1424,16 +1416,16 @@ void insereinstay(int inst)
 	}
 	
 	/* Insere o Novo Instrumento AY-3-8912 */
-	for (j=0; j<20; j++) instregay[inst].nome[j]=0;
+	memset(instregay[inst].nome,0,20);
 	sprintf(instregay[inst].nome,"vazio\0");
 	instregay[inst].num=inst;
-	instregay[i].freqenb=0;
-	instregay[i].noiseenb=0;
-	instregay[i].attack=0;
-	instregay[i].sustain=0;
-	instregay[i].decay=0;
-	instregay[i].volume=0;
-	instregay[i].repete=0;
+	instregay[inst].freqenb=0;
+	instregay[inst].noiseenb=0;
+	instregay[inst].attack=0;
+	instregay[inst].sustain=0;
+	instregay[inst].decay=0;
+	instregay[inst].volume=0;
+	instregay[inst].repete=0;
 	
 	printinstay();
 	printval();
@@ -1446,14 +1438,12 @@ void insereinstay(int inst)
 /* Apaga Instrumento AY-3-8912 */
 void apagainstay(int inst)
 {
-	int i,j;
+	int i;
 	
 	/* Roda os restantes Instrumentos AY-3-8912 uma posição para Baixo */
 	for (i=inst; i<127; i++)
 	{
-	//	sprintf(instregay[i].nome,instregay[i+1].nome);
-		for (j=0; j<20; j++) instregay[i].nome[j]=instregay[i+1].nome[j];
-	//	instregay[i].num=instregay[i+1].num;
+		memcpy(instregay[i].nome,instregay[i+1].nome,20);
 		instregay[i].num=i;
 		instregay[i].freqenb=instregay[i+1].freqenb;
 		instregay[i].noiseenb=instregay[i+1].noiseenb;
@@ -1465,7 +1455,7 @@ void apagainstay(int inst)
 	}
 	
 	/* "Zera" a Posição 127 */
-	for (j=0; j<20; j++) instregay[127].nome[j]=0;
+	memset(instregay[127].nome,0,20);
 	sprintf(instregay[127].nome,"vazio\0");
 	instregay[127].num=127;
 	instregay[127].freqenb=0;
@@ -1520,7 +1510,8 @@ void criainst()
 
 /*	for (i=0; i<128; i++)
 	{
-		sprintf(instregay[i].nome,"vazio-%d\0",i);
+		memset(instregay[i].nome,0,20);
+		sprintf(instregay[i].nome,"vazio\0",i);
 		instregay[i].num=i;
 		instregay[i].freqenb=instregay[i+1].freqenb;
 		instregay[i].noiseenb=instregay[i+1].noiseenb;
@@ -1534,6 +1525,7 @@ void criainst()
 
 /*	for (i=15; i<128; i++)
 	{
+		memset(instregay[i].nome,0,20);
 		sprintf(instregay[i].nome,"vazio\0",i);
 	}
 */	
