@@ -1,13 +1,16 @@
-/***********************************************/
-/*									           */
-/*  Philips SAA1099	Instrument Creator 1.2	   */
-/*										       */
-/*     CMS Card/Game Blaster, Sam Coupé        */
-/*										       */
-/* 	      (C) 2020 Penisoft / MadAxe    	   */
-/*									           */		
-/***********************************************/
+/*
+/*
+/*  Philips SAA1099 Instrument Creator 1.3
+/*
+/*  CMS Card/Game Blaster, Sam Coupé
+/*
+/*  Para compilar: tcc SaIntCrt.c
+/*
+/*  (C) 2022 Penisoft / MadAxe
+/*
+*/
 
+/* Includes */
 #include <stdio.h>
 #include <dos.h>
 #include <conio.h>
@@ -249,9 +252,9 @@ void screenclose(void)
 	clrscr();
 	
 	textcolor(11);
-	cprintf("Philips SAA1099 Instrument Creator 1.2\r\n");
+	cprintf("Philips SAA1099 Instrument Creator 1.3\r\n");
 	textcolor(10);
-	cprintf("(C) 2020 Penisoft / MadAxe\r\n");
+	cprintf("(C) 2022 Penisoft / MadAxe\r\n");
 	
 	_setcursortype(_NORMALCURSOR);
 	
@@ -266,9 +269,9 @@ int inicializa(void)
 	clrscr();
 	
 	textcolor(11);
-	cprintf("Philips SAA1099 Instrument Creator 1.2\r\n");
+	cprintf("Philips SAA1099 Instrument Creator 1.3\r\n");
 	textcolor(10);
-	cprintf("(C) 2020 Penisoft / MadAxe\r\n\r\n");
+	cprintf("(C) 2022 Penisoft / MadAxe\r\n\r\n");
 	
 	textcolor(15);
 
@@ -280,6 +283,8 @@ int inicializa(void)
 		cprintf("%s\r\n",txtsts);
 		return(f);
 	}
+	
+//	criainst();
 	
 	resetsa();
 
@@ -719,7 +724,7 @@ void printval(void)
 	textcolor(7);
 	
 	/* Posição do Instrumento no Bank */
-	gotoxy(64,5);cprintf("%3d",sy);
+	gotoxy(64,5);cprintf("%3d",instregsa[sy].num);
 	
 	/* Valores */
 	gotoxy(44,7);cprintf("%3d",instregsa[sy].freqenb);
@@ -963,6 +968,8 @@ void navegainstsa(void)
 void navegaval(void)
 {
 	
+	int i;
+	
 /*	if (KB_code==KB_LEFT && vox>0)	/* Esquerda 
 	{
 		if (voed==1) updateval();
@@ -1006,7 +1013,8 @@ void navegaval(void)
 		textbackground(4);
 		textcolor(14);
 		
-		sprintf(vron,instregsa[sy].nome);
+	//	sprintf(vron,instregsa[sy].nome);
+		for (i=0; i<20; i++) vron[i]=instregsa[sy].nome[i];
 		gotoxy(35,5);cprintf("%-20s",vron);
 		
 		noc=0;
@@ -1222,14 +1230,18 @@ void inputnome(void)
 /* Coloca o Novo Nome no Instrumento */
 void updatenome(void)
 {
+	
+	int i;
 
-	if (noc==0) sprintf(vron,"Vazio-%d\0'",sy);
+//	if (noc==0) sprintf(vron,"Vazio-%d\0'",sy);
+	if (noc==0) sprintf(vron,"Vazio");
 	else vron[noc]='\0';
 	
 	noed=0;
 	noc=0;
 	
-	sprintf(instregsa[sy].nome,vron);
+//	sprintf(instregsa[sy].nome,vron);
+	for (i=0; i<20; i++) instregsa[sy].nome[i]=vron[i];
 
 	textbackground(10);
 	textcolor(15);
@@ -1303,13 +1315,15 @@ int leinstsa(void)
 void insereinstsa(int inst)
 {
 	
-	int i;
+	int i,j;
 	
 	/* Roda os restantes Instrumentos SAA1099 uma posição para Cima */
-	for (i=128; i>inst; i--)
+	for (i=127; i>inst; i--)
 	{
-		sprintf(instregsa[i].nome,instregsa[i-1].nome);
-		instregsa[i].num=instregsa[i-1].num;
+	//	sprintf(instregsa[i].nome,instregsa[i-1].nome);
+		for (j=0; j<20; j++) instregsa[i].nome[j]=instregsa[i-1].nome[j];
+	//	instregsa[i].num=instregsa[i-1].num;
+		instregsa[i].num=i;
 		instregsa[i].freqenb=instregsa[i-1].freqenb;
 		instregsa[i].noiseenb=instregsa[i-1].noiseenb;
 		instregsa[i].attack=instregsa[i-1].attack;
@@ -1320,15 +1334,16 @@ void insereinstsa(int inst)
 	}
 	
 	/* Insere o Novo Instrumento SAA1099 */
+	for (j=0; j<20; j++) instregsa[inst].nome[j]=0;
 	sprintf(instregsa[inst].nome,"vazio\0");
 	instregsa[inst].num=inst;
-	instregsa[i].freqenb=0;
-	instregsa[i].noiseenb=0;
-	instregsa[i].attack=0;
-	instregsa[i].sustain=0;
-	instregsa[i].decay=0;
-	instregsa[i].volume=0;
-	instregsa[i].repete=0;
+	instregsa[inst].freqenb=0;
+	instregsa[inst].noiseenb=0;
+	instregsa[inst].attack=0;
+	instregsa[inst].sustain=0;
+	instregsa[inst].decay=0;
+	instregsa[inst].volume=0;
+	instregsa[inst].repete=0;
 	
 	printinstsa();
 	printval();
@@ -1341,13 +1356,15 @@ void insereinstsa(int inst)
 /* Apaga Instrumento SAA1099 */
 void apagainstsa(int inst)
 {
-	int i;
+	int i,j;
 	
 	/* Roda os restantes Instrumentos SAA1099 uma posição para Baixo */
 	for (i=inst; i<127; i++)
 	{
-		sprintf(instregsa[i].nome,instregsa[i+1].nome);
-		instregsa[i].num=instregsa[i+1].num;
+	//	sprintf(instregsa[i].nome,instregsa[i+1].nome);
+		for (j=0; j<20; j++) instregsa[i].nome[j]=instregsa[i+1].nome[j];
+	//	instregsa[i].num=instregsa[i+1].num;
+		instregsa[i].num=i;
 		instregsa[i].freqenb=instregsa[i+1].freqenb;
 		instregsa[i].noiseenb=instregsa[i+1].noiseenb;
 		instregsa[i].attack=instregsa[i+1].attack;
@@ -1358,6 +1375,7 @@ void apagainstsa(int inst)
 	}
 	
 	/* "Zera" a Posição 127 */
+	for (j=0; j<20; j++) instregsa[127].nome[j]=0;
 	sprintf(instregsa[127].nome,"vazio\0");
 	instregsa[127].num=127;
 	instregsa[127].freqenb=0;
@@ -1424,15 +1442,14 @@ void criainst()
 	}
 
 */
-	for (i=9; i<128; i++)
+/*	for (i=9; i<128; i++)
 	{
 		sprintf(instregsa[i].nome,"vazio\0");
 	}
-	
-/*	for (i=0; i<128; i++)
+*/	
+	for (i=0; i<128; i++)
 	{
-		instreg[i].num=i;
+		instregsa[i].num=i;
 	}
-*/
 
 }
