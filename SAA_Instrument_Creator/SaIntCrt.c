@@ -968,8 +968,6 @@ void navegainstsa(void)
 void navegaval(void)
 {
 	
-	int i;
-	
 /*	if (KB_code==KB_LEFT && vox>0)	/* Esquerda 
 	{
 		if (voed==1) updateval();
@@ -1013,8 +1011,7 @@ void navegaval(void)
 		textbackground(4);
 		textcolor(14);
 		
-	//	sprintf(vron,instregsa[sy].nome);
-		for (i=0; i<20; i++) vron[i]=instregsa[sy].nome[i];
+		memcpy(vron,instregsa[sy].nome,20);
 		gotoxy(35,5);cprintf("%-20s",vron);
 		
 		noc=0;
@@ -1231,17 +1228,13 @@ void inputnome(void)
 void updatenome(void)
 {
 	
-	int i;
-
-//	if (noc==0) sprintf(vron,"Vazio-%d\0'",sy);
-	if (noc==0) sprintf(vron,"Vazio");
+	if (noc==0) sprintf(vron,"vazio");
 	else vron[noc]='\0';
 	
 	noed=0;
 	noc=0;
 	
-//	sprintf(instregsa[sy].nome,vron);
-	for (i=0; i<20; i++) instregsa[sy].nome[i]=vron[i];
+	memcpy(instregsa[sy].nome,vron,20);
 
 	textbackground(10);
 	textcolor(15);
@@ -1315,14 +1308,12 @@ int leinstsa(void)
 void insereinstsa(int inst)
 {
 	
-	int i,j;
+	int i;
 	
 	/* Roda os restantes Instrumentos SAA1099 uma posição para Cima */
 	for (i=127; i>inst; i--)
 	{
-	//	sprintf(instregsa[i].nome,instregsa[i-1].nome);
-		for (j=0; j<20; j++) instregsa[i].nome[j]=instregsa[i-1].nome[j];
-	//	instregsa[i].num=instregsa[i-1].num;
+		memcpy(instregsa[i].nome,instregsa[i-1].nome,20);
 		instregsa[i].num=i;
 		instregsa[i].freqenb=instregsa[i-1].freqenb;
 		instregsa[i].noiseenb=instregsa[i-1].noiseenb;
@@ -1334,7 +1325,7 @@ void insereinstsa(int inst)
 	}
 	
 	/* Insere o Novo Instrumento SAA1099 */
-	for (j=0; j<20; j++) instregsa[inst].nome[j]=0;
+	memset(instregsa[inst].nome,0,20);
 	sprintf(instregsa[inst].nome,"vazio\0");
 	instregsa[inst].num=inst;
 	instregsa[inst].freqenb=0;
@@ -1356,14 +1347,12 @@ void insereinstsa(int inst)
 /* Apaga Instrumento SAA1099 */
 void apagainstsa(int inst)
 {
-	int i,j;
+	int i;
 	
 	/* Roda os restantes Instrumentos SAA1099 uma posição para Baixo */
 	for (i=inst; i<127; i++)
 	{
-	//	sprintf(instregsa[i].nome,instregsa[i+1].nome);
-		for (j=0; j<20; j++) instregsa[i].nome[j]=instregsa[i+1].nome[j];
-	//	instregsa[i].num=instregsa[i+1].num;
+		memcpy(instregsa[i].nome,instregsa[i+1].nome,20);
 		instregsa[i].num=i;
 		instregsa[i].freqenb=instregsa[i+1].freqenb;
 		instregsa[i].noiseenb=instregsa[i+1].noiseenb;
@@ -1375,7 +1364,7 @@ void apagainstsa(int inst)
 	}
 	
 	/* "Zera" a Posição 127 */
-	for (j=0; j<20; j++) instregsa[127].nome[j]=0;
+	memset(instregsa[127].nome,0,20);
 	sprintf(instregsa[127].nome,"vazio\0");
 	instregsa[127].num=127;
 	instregsa[127].freqenb=0;
@@ -1430,6 +1419,7 @@ void criainst()
 
 /*	for (i=0; i<128; i++)
 	{
+		memset(instregsa[i].nome,0,20);
 		sprintf(instregsa[i].nome,"vazio\0");
 		instregsa[i].num=i;
 		instregsa[i].freqenb=instregsa[i+1].freqenb;
@@ -1444,6 +1434,7 @@ void criainst()
 */
 /*	for (i=9; i<128; i++)
 	{
+		memset(instregsa[i].nome,0,20);
 		sprintf(instregsa[i].nome,"vazio\0");
 	}
 */	
