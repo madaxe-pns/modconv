@@ -289,7 +289,7 @@ int inicializa(void)
 		return(f);
 	}
 	
-	criainst();
+//	criainst();
 	
 	f=leayplayer();
 	if (f!=0)
@@ -1029,8 +1029,6 @@ void navegaval(void)
 		
 	//	sprintf(vron,instregay[sy].nome);
 		for (i=0; i<20; i++) vron[i]=instregay[sy].nome[i];
-		
-		
 		gotoxy(35,5);cprintf("%-20s",vron);
 		
 		noc=0;
@@ -1413,8 +1411,8 @@ void insereinstay(int inst)
 	/* Roda os restantes Instrumentos AY-3-8912 uma posição para Cima */
 	for (i=127; i>inst; i--)
 	{
-		for (j=0; j<20; j++) instregay[i].nome[j]=instregay[i-1].nome[j];
 	//	instregay[i].num=instregay[i-1].num;
+		for (j=0; j<20; j++) instregay[i].nome[j]=instregay[i-1].nome[j];
 		instregay[i].num=i;
 		instregay[i].freqenb=instregay[i-1].freqenb;
 		instregay[i].noiseenb=instregay[i-1].noiseenb;
