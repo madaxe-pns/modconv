@@ -46,6 +46,7 @@
 #define KB_S 115
 #define KB_T 116
 #define KB_U 117
+#define KB_V 118
 #define KB_W 119
 
 #define KB_UP 72
@@ -162,6 +163,7 @@
 /* Prototypes */
 void screenopen(void);
 void screenclose(void);
+void libertamem(void);
 
 int inicializa(void);
 void mainmenu(void);
@@ -172,6 +174,9 @@ void printocttxt(void);
 void printoctfm(void);
 void printoctsa(void);
 void printoctay(void);
+void printvolfm(void);
+void printvolsa(void);
+void printvolay(void);
 
 void alteracabmod(void);
 void carregapat(void);
@@ -454,6 +459,7 @@ short cnlfmy;
 /* Conversão Samples -> Instrumentos FM */
 unsigned char saminstfm[2][31];
 char octinstfm[31];
+unsigned char volinstfm[31];
 
 /* Conversão Canais MOD -> Canais FM */
 unsigned char cnlmodcnlfm[FMNUNCANAIS];
@@ -485,6 +491,7 @@ short cnlsay;
 /* Conversão Samples -> Instrumentos SAA1099 */
 unsigned char saminstsa[2][31];
 char octinstsa[31];
+unsigned char volinstsa[31];
 
 /* Conversão Canais MOD -> Canais SAA1099 */
 unsigned char cnlmodcnlsa[SAANUNCANAIS];
@@ -493,6 +500,7 @@ unsigned char cnlmodcnlsa[SAANUNCANAIS];
 unsigned char oitavasacnv;
 unsigned char freqsacnv;
 unsigned char oitavasa[SAANUNCANAIS];
+unsigned char canalinstsa[SAANUNCANAIS];
 unsigned char freqsa[SAANUNCANAIS];
 unsigned char volumesa[SAANUNCANAIS];
 unsigned char *patinfosa;
@@ -525,6 +533,7 @@ short cnlayy;
 /* Conversão Samples -> Instrumentos AY-3-8912 */
 unsigned char saminstay[2][31];
 char octinstay[31];
+unsigned char volinstay[31];
 
 /* Conversão Canais MOD -> Canais AY-3-8912 */
 unsigned char cnlmodcnlay[AYNUNCANAIS];
@@ -672,7 +681,7 @@ unsigned char *aymus;
 unsigned char aymuschks[1];
 
 /* Estado */
-char txtsts[70];
+char txtsts[79];
 
 
 /* Main */
@@ -693,8 +702,11 @@ int main(int argc, char *argv[])
 		return(4);
 	}
 	
-	if (inicializa()!=0) 
+	if (inicializa()!=0)
+	{
+		libertamem();
 		return(1);
+	}
 
 	screenopen();
 	
@@ -719,16 +731,7 @@ void screenopen(void)
 void screenclose(void)
 {
 	
-	int i;
-
-	/* Liberta a Memória Alocada */
-	free(patinfoay);
-	free(patinfosa);
-	free(patinfofm);
-	free(patinfo);
-	
-	for (i=0; i<31; i++)
-		if (tisample[i]) free(saminfo[i].data);
+	libertamem();
 
 	resetfm();
 	resetsa();
@@ -743,6 +746,27 @@ void screenclose(void)
 	cprintf("(C) 2022 Penisoft / MadAxe\r\n");
 	
 	_setcursortype(_NORMALCURSOR);
+	
+//	for (i=0; i<16; i++) printf("%d-%d    %d-%d\n",i,saminstay[0][i],i+15,saminstay[0][i+15]);
+//	for (i=0; i<16; i++) printf("%d-%d    %d-%d\n",i,saminstfm[0][i],i+15,saminstfm[0][i+15]);
+//	for (i=0; i<16; i++) printf("%d-%d    %d-%d\n",i,saminstsa[0][i],i+15,saminstsa[0][i+15]);
+	
+}
+
+/* Liberta a Memória Alocada */
+void libertamem(void)
+{
+	
+	int i;
+
+	/* Liberta a Memória Alocada */
+	free(patinfoay);
+	free(patinfosa);
+	free(patinfofm);
+	free(patinfo);
+	
+	for (i=0; i<31; i++)
+		if (tisample[i]) free(saminfo[i].data);
 	
 }
 
@@ -1037,17 +1061,18 @@ void printestado(void)
 	
 	textbackground(1);
 	textcolor(15);
-	gotoxy(1,25);cprintf("%-70s",txtsts);
+	gotoxy(1,25);cprintf("%-79s",txtsts);
 	
 	textbackground(0);
 		
 }
 
-/* Imprime o Texto da Oitava */
+/* Imprime o Texto da Oitava e Volume */
 void printocttxt(void)
 {
 	textcolor(11);
 	gotoxy(54,7);cprintf("Correcao Oitava");
+	gotoxy(54,10);cprintf("Afinacao Volume");
 	
 	textcolor(15);
 	gotoxy(59,6);
@@ -1061,7 +1086,9 @@ void printoctfm(void)
 	textbackground(1);
 	textcolor(15);
 	gotoxy(59,8);
-	cprintf(" %2d ",octinstfm[ny]);
+	if (saminstfm[0][ny]==128) cprintf(" -- ");
+	else
+		cprintf(" %2d ",octinstfm[ny]);
 	textbackground(0);
 	
 }
@@ -1073,7 +1100,9 @@ void printoctsa(void)
 	textbackground(1);
 	textcolor(15);
 	gotoxy(59,8);
-	cprintf(" %2d ",octinstsa[ny]);
+	if (saminstsa[0][ny]==128) cprintf(" -- ");
+	else
+		cprintf(" %2d ",octinstsa[ny]);
 	textbackground(0);
 	
 }
@@ -1085,7 +1114,51 @@ void printoctay(void)
 	textbackground(1);
 	textcolor(15);
 	gotoxy(59,8);
-	cprintf(" %2d ",octinstay[ny]);
+	if (saminstay[0][ny]==128) cprintf(" -- ");
+	else
+		cprintf(" %2d ",octinstay[ny]);
+	textbackground(0);
+	
+}
+
+/* Imprime o Volume FM */
+void printvolfm(void)
+{
+
+	textbackground(1);
+	textcolor(15);
+	gotoxy(59,11);
+	if (saminstfm[0][ny]==128) cprintf(" -- ");
+	else
+		cprintf(" %2d ",63-volinstfm[ny]);
+	textbackground(0);
+	
+}
+
+/* Imprime o Volume SAA1099 */
+void printvolsa(void)
+{
+
+	textbackground(1);
+	textcolor(15);
+	gotoxy(59,11);
+	if (saminstsa[0][ny]==128) cprintf(" -- ");
+	else
+		cprintf(" %2d ",volinstsa[ny]);
+	textbackground(0);
+	
+}
+
+/* Imprime o Volume AY-3-8912 */
+void printvolay(void)
+{
+
+	textbackground(1);
+	textcolor(15);
+	gotoxy(59,11);
+	if (saminstay[0][ny]==128) cprintf(" -- ");
+	else
+		cprintf(" %2d ",volinstay[ny]);
 	textbackground(0);
 	
 }
@@ -1270,11 +1343,17 @@ int lemodulo(void)
 		
 	/* Aloca Memória para o Cabeçalho */
 	fpdata=(char*)calloc(1084,sizeof(char));
+	if (fpdata==NULL)
+	{
+		sprintf(txtsts,"Erro ao Alocar Memoria - Cabecalho!\0");
+		fclose(fp);
+		return(3);
+	}
 		
 	/* Lê o Cabeçalho do Ficheiro */
 	if (fread(fpdata,1084,1,fp)==0)
 	{
-		sprintf(txtsts,"Erro ao Ler Modulo!\0");
+		sprintf(txtsts,"Erro ao Ler Modulo - Cabecalho!\0");
 		fclose(fp);
 		free(fpdata);
 		return(2);
@@ -1286,20 +1365,44 @@ int lemodulo(void)
 		
 	/* Aloca Memória para as Patterns */
 	patinfo=(char*)calloc(SIZEPATINFOMOD*maxpat,sizeof(char));
+	if (patinfo==NULL)
+	{
+		sprintf(txtsts,"Erro ao Alocar Memoria - Patterns!\0");
+		fclose(fp);
+		return(3);
+	}
 	
 	/* Aloca Memória para as Patterns FM */
 	patinfofm=(char*)calloc(SIZEPATINFOFM*maxpat,sizeof(char));
+	if (patinfofm==NULL)
+	{
+		sprintf(txtsts,"Erro ao Alocar Memoria - Patterns FM!\0");
+		fclose(fp);
+		return(3);
+	}
 	
 	/* Aloca Memória para as Patterns SAA1099 */
 	patinfosa=(char*)calloc(SIZEPATINFOSA*maxpat,sizeof(char));
+	if (patinfosa==NULL)
+	{
+		sprintf(txtsts,"Erro ao Alocar Memoria - Patterns SAA1099!\0");
+		fclose(fp);
+		return(3);
+	}
 	
 	/* Aloca Memória para as Patterns AY-3-8912 */
 	patinfoay=(char*)calloc(SIZEPATINFOAY*maxpat,sizeof(char));
+	if (patinfoay==NULL)
+	{
+		sprintf(txtsts,"Erro ao Alocar Memoria - Patterns AY-3-8912!\0");
+		fclose(fp);
+		return(3);
+	}
 		
 	/* Lê as Patterns do Ficheiro */
 	if (fread(patinfo,SIZEPATINFOMOD*maxpat,1,fp)==0)
 	{
-		sprintf(txtsts,"Erro ao Ler Modulo!\0");
+		sprintf(txtsts,"Erro ao Ler Modulo - Patterns!\0");
 		fclose(fp);
 		return(2);
 	}
@@ -1307,14 +1410,22 @@ int lemodulo(void)
 	/* Aloca Memória para os Samples */
 	for(i=0; i<31; i++)
 		if (tisample[i])
+		{	
 			saminfo[i].data=(char*)calloc(saminfo[i].size,sizeof(char));
+			if (saminfo[i].data==NULL)
+			{
+				sprintf(txtsts,"Erro ao Alocar Memoria - Sample: %d\0",i);
+				fclose(fp);
+				return(3);
+			}
+		}
 		
 	/* Lê os Samples do Ficheiro */
 	for(i=0; i<31; i++)
 		if (tisample[i])
 			if (fread(saminfo[i].data,1,saminfo[i].size,fp)==0)
 			{
-				sprintf(txtsts,"Erro ao Ler Modulo!\0");
+				sprintf(txtsts,"Erro ao Ler Modulo - Sample: %d!\0",i);
 				fclose(fp);
 				return(2);
 			}
@@ -1448,6 +1559,14 @@ int lestsfm(void)
 		return(2);
 	}
 	
+	/* Afinação Volume Instrumentos FM */	
+	if (fread(volinstfm,sizeof(volinstfm),1,fp)==0)
+	{
+		sprintf(txtsts,"Erro ao Ler Estado FM!\0");
+		fclose(fp);
+		return(2);
+	}
+	
 	/* Informação dos Canais FM */
 	if (fread(cnlmodcnlfm,sizeof(cnlmodcnlfm),1,fp)==0)
 	{
@@ -1493,6 +1612,14 @@ int gravastsfm(void)
 		return(2);
 	}
 	
+	/* Afinação Volume Instrumentos FM */
+	if (fwrite(volinstfm,sizeof(volinstfm),1,fp)==0)
+	{
+		sprintf(txtsts,"Erro ao Gravar Estado FM!\0");
+		fclose(fp);
+		return(2);
+	}
+	
 	/* Informação dos Canais FM */
 	if (fwrite(cnlmodcnlfm,sizeof(cnlmodcnlfm),1,fp)==0)
 	{
@@ -1500,7 +1627,7 @@ int gravastsfm(void)
 		fclose(fp);
 		return(2);
 	}
-
+	
 	sprintf(txtsts,"Estado FM Gravado com Sucesso!\0");
 
 	fclose(fp);
@@ -1535,7 +1662,8 @@ int gravamusicafm(void)
 			saveinstregfm[i].op1reg8=instreg[s].op1reg8;
 			saveinstregfm[i].op1rege=instreg[s].op1rege;
 			saveinstregfm[i].op2reg2=instreg[s].op2reg2;
-			saveinstregfm[i].op2reg4=instreg[s].op2reg4;
+		//	saveinstregfm[i].op2reg4=instreg[s].op2reg4;
+			saveinstregfm[i].op2reg4=volinstfm[i];
 			saveinstregfm[i].op2reg6=instreg[s].op2reg6;
 			saveinstregfm[i].op2reg8=instreg[s].op2reg8;
 			saveinstregfm[i].op2rege=instreg[s].op2rege;	
@@ -1662,8 +1790,16 @@ int lestssa(void)
 		return(2);
 	}
 	
-	/* Correcção Oitava SAA1099 */
+	/* Correcção Oitava Instrumentos SAA1099 */
 	if (fread(octinstsa,sizeof(octinstsa),1,fp)==0)
+	{
+		sprintf(txtsts,"Erro ao Ler Estado SAA1099!\0");
+		fclose(fp);
+		return(2);
+	}
+	
+	/* Afinação Volume Instrumentos SAA1099 */
+	if (fread(volinstsa,sizeof(volinstsa),1,fp)==0)
 	{
 		sprintf(txtsts,"Erro ao Ler Estado SAA1099!\0");
 		fclose(fp);
@@ -1707,8 +1843,16 @@ int gravastssa(void)
 		return(2);
 	}
 
-	/* Correcção Oitava SAA1099 */
+	/* Correcção Oitava Instrumentos SAA1099 */
 	if (fwrite(octinstsa,sizeof(octinstsa),1,fp)==0)
+	{
+		sprintf(txtsts,"Erro ao Gravar Estado SAA1099!\0");
+		fclose(fp);
+		return(2);
+	}
+	
+	/* Afinação Volume Instrumentos SAA1099 */
+	if (fwrite(volinstsa,sizeof(volinstsa),1,fp)==0)
 	{
 		sprintf(txtsts,"Erro ao Gravar Estado SAA1099!\0");
 		fclose(fp);
@@ -1755,7 +1899,8 @@ int gravamusicasa(void)
 			saveinstregsa[i].attack=instregsa[s].attack;
 			saveinstregsa[i].sustain=instregsa[s].sustain;
 			saveinstregsa[i].decay=instregsa[s].decay;
-			saveinstregsa[i].volume=instregsa[s].volume;
+		//	saveinstregsa[i].volume=instregsa[s].volume;
+			saveinstregsa[i].volume=volinstsa[i];
 			saveinstregsa[i].repete=instregsa[s].repete;
 		}
 		else
@@ -1903,8 +2048,16 @@ int lestsay(void)
 		return(2);
 	}
 	
-	/* Correcção Oitava AY-3-8912 */
+	/* Correcção Oitava Instrumentos AY-3-8912 */
 	if (fread(octinstay,sizeof(octinstay),1,fp)==0)
+	{
+		sprintf(txtsts,"Erro ao Ler Estado AY-3-8912!\0");
+		fclose(fp);
+		return(2);
+	}
+	
+	/* Afinacao Volume Instrumentos AY-3-8912 */
+	if (fread(volinstay,sizeof(volinstay),1,fp)==0)
 	{
 		sprintf(txtsts,"Erro ao Ler Estado AY-3-8912!\0");
 		fclose(fp);
@@ -1948,8 +2101,16 @@ int gravastsay(void)
 		return(2);
 	}
 
-	/* Correcção Oitava AY-3-8912 */
+	/* Correcção Oitava Instrumentos AY-3-8912 */
 	if (fwrite(octinstay,sizeof(octinstay),1,fp)==0)
+	{
+		sprintf(txtsts,"Erro ao Gravar Estado AY-3-8912!\0");
+		fclose(fp);
+		return(2);
+	}
+	
+	/* Afinacao Volume Instrumentos AY-3-8912 */
+	if (fwrite(volinstay,sizeof(volinstay),1,fp)==0)
 	{
 		sprintf(txtsts,"Erro ao Gravar Estado AY-3-8912!\0");
 		fclose(fp);
@@ -1995,7 +2156,8 @@ int gravamusicaay(void)
 			saveinstregay[i].attack=instregay[s].attack;
 			saveinstregay[i].sustain=instregay[s].sustain;
 			saveinstregay[i].decay=instregay[s].decay;
-			saveinstregay[i].volume=instregay[s].volume;
+		//	saveinstregay[i].volume=instregay[s].volume;
+			saveinstregay[i].volume=volinstay[i];
 			saveinstregay[i].repete=instregay[s].repete;
 		}
 		else
@@ -2434,6 +2596,7 @@ void navegasam()
 		}
 		printoctfm();
 		printsaminstfm();
+		printvolfm();
 	}
 	
 	/* Instrumentos SAA1099 */
@@ -2447,6 +2610,7 @@ void navegasam()
 		}
 		printoctsa();
 		printsaminstsa();
+		printvolsa();
 	}
 	
 	/* Instrumentos AY-3-8912 */
@@ -2460,6 +2624,7 @@ void navegasam()
 		}
 		printoctay();
 		printsaminstay();
+		printvolay();
 	}
 }
 
@@ -2522,6 +2687,7 @@ void printfm(void)
 	/* Oitava */
 	printocttxt();
 	printoctfm();
+	printvolfm();
 		
 	/* Estado */
 	sprintf(txtsts,"Pagina de Conversao de MOD para FM.\0");
@@ -2649,14 +2815,14 @@ void printhlpinst(void)
 	
 	textbackground(0);
 	textcolor(11);
-	gotoxy(54,14);
+	gotoxy(54,17);
 	cprintf("ALT - Alterna entre");
-	gotoxy(54,15);
+	gotoxy(54,18);
 	cprintf("Samples e Instrumentos");
 	
-	gotoxy(54,17);
+	gotoxy(54,20);
 	cprintf("CTRL + ALT - Para ");
-	gotoxy(54,18);
+	gotoxy(54,21);
 	cprintf("configurar Canais");
 	
 }
@@ -2695,6 +2861,7 @@ void resetsaminstfm()
 		saminstfm[0][i]=128;
 		saminstfm[1][i]=0;
 		octinstfm[i]=2;
+		volinstfm[i]=63;
 	}
 	
 }
@@ -2736,7 +2903,7 @@ void printinstfm(void)
 void printsaminstfmtxt(void)
 {
 	textcolor(10);
-	gotoxy(54,10);cprintf("Instrumento FM");
+	gotoxy(54,13);cprintf("Instrumento FM");
 }
 
 /* Imprime o Instrumento FM atribuido ao Sample selecionado */
@@ -2744,8 +2911,9 @@ void printsaminstfm(void)
 {
 	
 	textcolor(15);
-	gotoxy(54,11);
-	if (saminstfm[0][ny]==128) cprintf("Sem Instrumento");
+	gotoxy(54,14);
+	if (saminstfm[0][ny]==128)
+		cprintf("Sem Instrumento");
 	else cprintf("%-20s",instreg[saminstfm[0][ny]].nome);
 	textbackground(0);
 	
@@ -2838,6 +3006,7 @@ void navegafm(void)
 				printinstfm();
 				printocttxt();
 				printoctfm();
+				printvolfm();
 				printsaminstfmtxt();
 				printsaminstfm();
 			}
@@ -2881,6 +3050,19 @@ void navegafm(void)
 			printoctfm();
 		}
 		
+		/* Volume */
+		if (KB_code==KB_B && 63-volinstfm[ny]<63)	/* Tecla B */
+		{
+			volinstfm[ny]--;
+			printvolfm();
+		}
+		
+		if (KB_code==KB_V && 63-volinstfm[ny]>0)	/* Tecla V */
+		{
+			volinstfm[ny]++;
+			printvolfm();
+		}
+		
 		/* Converte o MOD para FM */
 		if (KB_code==KB_C) convertmodfm();
 		
@@ -2908,6 +3090,7 @@ void navegafm(void)
 				printinstfm();
 				printocttxt();
 				printoctfm();
+				printvolfm();
 				printsaminstfmtxt();
 				printsaminstfm();
 				sprintf(txtsts,"Atribuicao de Instrumentos Anulada!\0");
@@ -2997,11 +3180,14 @@ void navegainstfm(void)
 		sifm=pifm;
 	}
 	
-	if (KB_code==KB_RETURN)	/* RETURN - Atribui o Instrumento para o Sample Selecionado */
+	if (KB_code==KB_RETURN && tisample[ny])	/* RETURN - Atribui o Instrumento FM para o Sample Selecionado */
 	{
 		saminstfm[0][ny]=sifm;
 		saminstfm[1][ny]=pifm;
+		volinstfm[ny]=instreg[sifm].op2reg4;
 		printsaminstfm();
+		printoctfm();
+		printvolfm();
 		sprintf(txtsts,"Instrumento '%s' atribuido ao Sample '%s'\0",instreg[sifm].nome,nomesample[ny]);
 		printestado();
 	}
@@ -3632,7 +3818,9 @@ void playmusicafm(void)
 			//	}
 			//	else volfm=instreg[sifm].op2reg4;
 			
-				volfm=instreg[sifm].op2reg4;
+			//	volfm=instreg[sifm].op2reg4;
+				
+				volfm=volinstfm[fmsamplenum[i][j]-1];
 			
 				oitavafm=fmoct[i][j]+octinstfm[fmsamplenum[i][j]-1]; /* Correcção da Oitava */
 				
@@ -3702,6 +3890,7 @@ void resetsaminstsa()
 		saminstsa[0][i]=128;
 		saminstsa[1][i]=0;
 		octinstsa[i]=0;
+		volinstsa[i]=0;
 	}
 	
 }
@@ -3775,6 +3964,7 @@ void printsa(void)
 	/* Oitava */
 	printocttxt();
 	printoctsa();
+	printvolsa();
 		
 	/* Estado */
 	sprintf(txtsts,"Pagina de Conversao de MOD para SAA1099.\0");
@@ -3809,7 +3999,7 @@ void printinstsa(void)
 void printsaminstsatxt(void)
 {
 	textcolor(10);
-	gotoxy(54,10);cprintf("Instrumento SAA1099");
+	gotoxy(54,13);cprintf("Instrumento SAA1099");
 }
 
 /* Imprime o Instrumento SAA1099 atribuido ao Sample selecionado */
@@ -3817,7 +4007,7 @@ void printsaminstsa(void)
 {
 	
 	textcolor(15);
-	gotoxy(55,11);
+	gotoxy(55,14);
 	if (saminstsa[0][ny]==128) cprintf("Sem Instrumento");
 	else cprintf("%-20s",instregsa[saminstsa[0][ny]].nome);
 	textbackground(0);
@@ -3898,6 +4088,7 @@ void navegasa(void)
 				printinstsa();
 				printocttxt();
 				printoctsa();
+				printvolsa();
 				printsaminstsatxt();
 				printsaminstsa();
 			}
@@ -3941,6 +4132,19 @@ void navegasa(void)
 			printoctsa();
 		}
 		
+		/* Volume */
+		if (KB_code==KB_V && volinstsa[ny]>0)	/* Tecla V */
+		{
+			volinstsa[ny]--;
+			printvolsa();
+		}
+		
+		if (KB_code==KB_B && volinstsa[ny]<15)	/* Tecla B */
+		{
+			volinstsa[ny]++;
+			printvolsa();
+		}
+		
 		/* Converte o MOD para SAA1099 */
 		if (KB_code==KB_C) convertmodsa();
 		
@@ -3971,6 +4175,7 @@ void navegasa(void)
 				printinstsa();
 				printocttxt();
 				printoctsa();
+				printvolsa();
 				printsaminstsatxt();
 				printsaminstsa();
 				sprintf(txtsts,"Atribuicao de Instrumentos Anulada!\0");
@@ -4060,11 +4265,14 @@ void navegainstsa(void)
 		sisa=pisa;
 	}
 	
-	if (KB_code==KB_RETURN)	/* RETURN - Atribui o Instrumento para o Sample Selecionado */
+	if (KB_code==KB_RETURN && tisample[ny])	/* RETURN - Atribui o Instrumento SAA1099 para o Sample Selecionado */
 	{
 		saminstsa[0][ny]=sisa;
 		saminstsa[1][ny]=pisa;
+		volinstsa[ny]=instregsa[sisa].volume;
 		printsaminstsa();
+		printoctsa();
+		printvolsa();
 		sprintf(txtsts,"Instrumento '%s' atribuido ao Sample '%s'\0",instregsa[sisa].nome,nomesample[ny]);
 		printestado();
 	}
@@ -4462,6 +4670,7 @@ void navegapatsa(void)
 					if (playenvlsa[i]!=0)
 					{
 						sisa=playenvlsa[i];
+					//	sisa=canalinstsa[i];
 						envelopsa(i);
 					//	criasomsa(i,freqsa[i]);
 						setvolsa(i);
@@ -4632,7 +4841,10 @@ void playmusicasa(void)
 			//		volumesa[j]=saefectpar[i][j];
 			//	else volumesa[j]=instregsa[sisa].volume;
 			
-				volumesa[j]=instregsa[sisa].volume;
+			//	volumesa[j]=instregsa[sisa].volume;
+				volumesa[j]=volinstsa[sasamplenum[i][j]-1];
+				
+				//canalinstsa[j]=sisa;
 			
 				oitavasa[j]=saoct[i][j]+octinstsa[sasamplenum[i][j]-1];	/* Correcção da Oitava */
 				
@@ -4709,6 +4921,7 @@ void resetsaminstay()
 		saminstay[0][i]=128;
 		saminstay[1][i]=0;
 		octinstay[i]=2;
+		volinstay[i]=0;
 	}
 	
 }
@@ -4781,6 +4994,7 @@ void printay(void)
 	/* Oitava */
 	printocttxt();
 	printoctay();
+	printvolay();
 		
 	/* Estado */
 	sprintf(txtsts,"Pagina de Conversao de MOD para AY-3-8912.\0");
@@ -4815,7 +5029,7 @@ void printinstay(void)
 void printsaminstaytxt(void)
 {
 	textcolor(10);
-	gotoxy(54,10);cprintf("Instrumento AY-3-8912");
+	gotoxy(54,13);cprintf("Instrumento AY-3-8912");
 }
 
 /* Imprime o Instrumento AY-3-8912 atribuido ao Sample selecionado */
@@ -4823,7 +5037,7 @@ void printsaminstay(void)
 {
 	
 	textcolor(15);
-	gotoxy(55,11);
+	gotoxy(55,14);
 	if (saminstay[0][ny]==128) cprintf("Sem Instrumento");
 	else cprintf("%-20s",instregay[saminstay[0][ny]].nome);
 	textbackground(0);
@@ -4906,6 +5120,7 @@ void navegaay(void)
 				printinstay();
 				printocttxt();
 				printoctay();
+				printvolay();
 				printsaminstaytxt();
 				printsaminstay();
 			}
@@ -4949,6 +5164,19 @@ void navegaay(void)
 			printoctay();
 		}
 		
+		/* Volume */
+		if (KB_code==KB_V && volinstay[ny]>0)	/* Tecla V */
+		{
+			volinstay[ny]--;
+			printvolay();
+		}
+		
+		if (KB_code==KB_B && volinstay[ny]<15)	/* Tecla B */
+		{
+			volinstay[ny]++;
+			printvolay();
+		}
+		
 		/* Converte o MOD para AY-3-8912 */
 		if (KB_code==KB_C) convertmoday();
 		
@@ -4979,6 +5207,7 @@ void navegaay(void)
 				printinstay();
 				printocttxt();
 				printoctay();
+				printvolay();
 				printsaminstaytxt();
 				printsaminstay();
 				sprintf(txtsts,"Atribuicao de Instrumentos Anulada!\0");
@@ -5069,11 +5298,14 @@ void navegainstay(void)
 		siay=piay;
 	}
 	
-	if (KB_code==KB_RETURN)	/* RETURN - Atribui o Instrumento para o Sample Selecionado */
+	if (KB_code==KB_RETURN && tisample[ny])	/* RETURN - Atribui o Instrumento AY-3-8912 para o Sample Selecionado */
 	{
 		saminstay[0][ny]=siay;
 		saminstay[1][ny]=piay;
+		volinstay[ny]=instregay[siay].volume;
 		printsaminstay();
+		printoctay();
+		printvolay();
 		sprintf(txtsts,"Instrumento '%s' atribuido ao Sample '%s'\0",instregay[siay].nome,nomesample[ny]);
 		printestado();
 	}
@@ -5184,7 +5416,7 @@ void convertmoday(void)
 							hi=(int)(aysam/4);
 							lo=(int)(aysam-hi*4);
 							patinfoay[h+p]=lo*64+oitavaaycnv*16+freqaycnv;
-							
+													
 							/* Byte 3 */
 							switch (p)
 							{
@@ -5207,7 +5439,7 @@ void convertmoday(void)
 						else
 						{
 							patinfoay[h+p]=0;
-							patinfoay[h+3]=0;
+						//	patinfoay[h+3]=0;
 						}
 					}
 					
@@ -5692,7 +5924,8 @@ void playmusicaay(void)
 			//		volumesa[j]=saefectpar[i][j];
 			//	else volumesa[j]=instregsa[sisa].volume;
 			
-				volumeay[j]=instregay[siay].volume;
+			//	volumeay[j]=instregay[siay].volume;
+				volumeay[j]=volinstay[aysamplenum[i][j]-1];
 			
 				oitavaay[j]=ayoct[i][j]+octinstay[aysamplenum[i][j]-1]-2;	/* Correcção da Oitava */
 				
@@ -6121,6 +6354,7 @@ void getenvlsa(unsigned char canal)
 	if (envlssa[canal][0]!=0 || envlssa[canal][1]!=0 || envlssa[canal][2]!=0) playenvlsa[canal]=sisa;
 	
 	if (envlssa[canal][0]==0) volumesa[canal]=instregsa[sisa].volume;
+//	if (envlssa[canal][0]==0) volumesa[canal]=volinstsa[sisa];
 	else volumesa[canal]=0;
 	
 }
@@ -6138,6 +6372,7 @@ void envelopsa(unsigned char canal)
 			cntenvlssa[canal][0]=factorsa*instregsa[sisa].attack;
 			volumesa[canal]++;
 			if (volumesa[canal]==instregsa[sisa].volume)
+		//	if (volumesa[canal]==volinstsa[sisa])
 			{
 				envlssa[canal][0]=0;
 				if (envlssa[canal][1]==0 && envlssa[canal][2]==0) playenvlsa[canal]=0;
@@ -6332,6 +6567,7 @@ void getenvlay(unsigned char canal)
 	if (envlsay[canal][0]!=0 || envlsay[canal][1]!=0 || envlsay[canal][2]!=0) playenvlay[canal]=siay;
 	
 	if (envlsay[canal][0]==0) volumeay[canal]=instregay[siay].volume;
+//	if (envlsay[canal][0]==0) volumeay[canal]=volinstay[siay];
 	else volumeay[canal]=0;
 	
 }
@@ -6349,6 +6585,7 @@ void envelopay(unsigned char canal)
 			cntenvlsay[canal][0]=factoray*instregay[siay].attack;
 			volumeay[canal]++;
 			if (volumeay[canal]==instregay[siay].volume)
+		//	if (volumeay[canal]==volinstay[siay])
 			{
 				envlsay[canal][0]=0;
 				if (envlsay[canal][1]==0 && envlsay[canal][2]==0) playenvlay[canal]=0;
@@ -6684,15 +6921,16 @@ void printhelp(void)
 		gotoxy(5,9);cprintf("R: Apaga todas as Atribuicoes de Instrumentos aos Samples");
 		
 		gotoxy(5,11);cprintf("+ / - : Aumenta / Diminui Correcao da Oitava");
+		gotoxy(5,12);cprintf("V / B : Aumenta / Diminui Afinacao do Volume");
 		
-		gotoxy(5,13);cprintf("Teclas Gerais:");
+		gotoxy(5,14);cprintf("Teclas Gerais:");
 		
-		gotoxy(5,15);cprintf("Q - Grava o Estado de Atribuicao de Instrumentos/Canais");
-		gotoxy(5,16);cprintf("E - Le o Estado de Atribuicao de Instrumentos/Canais");
+		gotoxy(5,16);cprintf("Q - Grava o Estado de Atribuicao de Instrumentos/Canais");
+		gotoxy(5,17);cprintf("E - Le o Estado de Atribuicao de Instrumentos/Canais");
 		
-		gotoxy(5,18);cprintf("C : Converte o Modulo para FM / SAA1099 / AY-3-8912");
+		gotoxy(5,19);cprintf("C : Converte o Modulo para FM / SAA1099 / AY-3-8912");
 		
-		gotoxy(5,20);cprintf("G : Grava a Musica Convertida");
+		gotoxy(5,21);cprintf("G : Grava a Musica Convertida");
 		
 		gotoxy(5,23);cprintf("Cursor Direita: Seguinte, Cursor Esquerda: Anterior  Return: Sai do Help");		
 	}
@@ -6777,9 +7015,9 @@ void printhelp(void)
 	
 		gotoxy(5,12);cprintf("1,2,3 - Liga/Desliga Canais AY-3-8912");
 		gotoxy(5,14);cprintf("1,2,3,4,5,6,7,8,9 - Liga/Desliga Canais FM");
-		gotoxy(5,16);cprintf("1,2,3,4,5,6,7,8,9,A,B - Liga/Desliga Canais SAA1099");
+		gotoxy(5,16);cprintf("1,2,3,4,5,6 - Liga/Desliga Canais SAA1099");
 		
-		gotoxy(5,18);cprintf("ALT + Mostra mais Canais FM / SAA1099");
+		gotoxy(5,18);cprintf("ALT - Mostra mais Canais FM");
 		
 		gotoxy(5,23);cprintf("Cursor Esquerda: Anterior                            Return: Sai do Help");
 	}
