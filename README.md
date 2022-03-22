@@ -28,3 +28,6 @@ Sources do Criador/Editor/Player de Instrumentos Philips SAA1009.
 
 ### SAA_Player
 Sources do Player de Músicas Philips SAA1099.
+
+### YM_Player
+Sources do Player de Músicas YM2149F.
