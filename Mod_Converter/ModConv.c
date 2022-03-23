@@ -5347,7 +5347,8 @@ void convertmoday(void)
 	int i,j;
 	int x,y;
 	int p,h;
-	int hic;
+	int hic,loc;
+	int hic2,loc2;
 	
 	unsigned char ayefect,ayfectpar,aysam;
 	
@@ -5420,16 +5421,35 @@ void convertmoday(void)
 							/* Byte 3 */
 							switch (p)
 							{
-								case 0:patinfoay[h+3]=hi*64+ayefect;break;
+								case 0:
+								{
+									hic=(int)(patinfoay[h+3]/64);
+									loc=(int)(patinfoay[h+3]-hic*64);
+									hic=(int)(loc/4);
+									patinfoay[h+3]=hi*64+hic*4+ayefect;
+																	
+								//	patinfoay[h+3]=hi*64+ayefect;
+									break;
+								}
 								case 1: 
 								{
-									hic=(int)patinfoay[h+3]/64;
-									patinfoay[h+3]=hic*64+hi*16+ayefect;
+									hic=(int)(patinfoay[h+3]/64);
+									
+									loc=(int)(patinfoay[h+3]-hic*64);
+									
+									hic2=(int)(loc/4);
+									
+									loc2=(int)(hic2/2);
+									hic2=(int)(hic2-loc2*2);
+									
+									patinfoay[h+3]=hic*64+hi*16+hic2*4+ayefect;
+								
+								//	patinfoay[h+3]=hic*64+hi*16+ayefect;
 									break;
 								}
 								case 2: 
 								{
-									hic=(int)patinfoay[h+3]/16;
+									hic=(int)(patinfoay[h+3]/16);
 									patinfoay[h+3]=hic*16+hi*4+ayefect;
 									break;
 								}
