@@ -5439,8 +5439,8 @@ void convertmoday(void)
 									
 									hic2=(int)(loc/4);
 									
-									loc2=(int)(hic2/2);
-									hic2=(int)(hic2-loc2*2);
+									loc2=(int)(hic2/4);
+									hic2=(int)(hic2-loc2*4);
 									
 									patinfoay[h+3]=hic*64+hi*16+hic2*4+ayefect;
 								
