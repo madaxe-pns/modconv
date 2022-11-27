@@ -151,7 +151,6 @@ struct cabfilessa
 } cabfilesa;
 
 short notassa[13]={SA_V,SA_C,SA_Cs,SA_D,SA_Ds,SA_E,SA_F,SA_Fs,SA_G,SA_Gs,SA_A,SA_As,SA_B};
-short cnlonsa[SAANUNCANAIS]={1,1,1,1,1,1};
 unsigned octsa[2][3]={0,0,0,0,0,0};
 
 /* Estado */
@@ -289,7 +288,6 @@ void mainmenu(void)
 			{
 				sisa=canalinstsa[i];
 				envelopsa(i);
-			//	criasomsa(i,freqsa[i]);
 				setvolsa(i);
 			}
 
@@ -486,9 +484,6 @@ void precriasomsa(unsigned char canal,int freqindex)
 	
 	getenvlsa(canal);
 	
-/*	if (playenvlsa[canal]!=0) freqsa[canal]=freqindex;
-	else criasomsa(canal,freqindex); */
-	
 	criasomsa(canal,freqindex);
 	
 }
@@ -497,19 +492,15 @@ void precriasomsa(unsigned char canal,int freqindex)
 void setvolsa(unsigned char canal)
 {
 	
-	if (cnlonsa[canal]==1)
+	if (soundtype==0)												/* Volume */
+		writesa1(0x00+canal,(volumesa[canal]<<4)+volumesa[canal]);	/* Mono */
+	else
 	{
-		if (soundtype==0)												/* Volume */
-			writesa1(0x00+canal,volumesa[canal]*16+volumesa[canal]);	/* Mono */
+		if (canal==0 || canal==2 || canal==4)						/* Estéreo */
+			writesa1(0x00+canal,volumesa[canal]<<4);
 		else
-		{
-			if (canal==0 || canal==2 || canal==4)						/* Estéreo */
-				writesa1(0x00+canal,volumesa[canal]*16);
-			else
-				writesa1(0x00+canal,volumesa[canal]);
-		}
+			writesa1(0x00+canal,volumesa[canal]);
 	}
-	else writesa1(0x00+canal,0);
 				
 }
 
@@ -517,72 +508,45 @@ void setvolsa(unsigned char canal)
 void criasomsa(unsigned char canal,int freqindex)
 {
 	
-	unsigned char oct;
-	
-	if (cnlonsa[canal]==1)
+	if (soundtype==0)												/* Volume */
+		writesa1(0x00+canal,(volumesa[canal]<<4)+volumesa[canal]);	/* Mono */
+	else
 	{
-		if (soundtype==0)												/* Volume */
-			writesa1(0x00+canal,volumesa[canal]*16+volumesa[canal]);	/* Mono */
+		if (canal==0 || canal==2 || canal==4)						/* Estéreo */
+			writesa1(0x00+canal,volumesa[canal]<<4);
 		else
-		{
-			if (canal==0 || canal==2 || canal==4)						/* Estéreo */
-				writesa1(0x00+canal,volumesa[canal]*16);
-			else
-				writesa1(0x00+canal,volumesa[canal]);
-		}
+			writesa1(0x00+canal,volumesa[canal]);
 	}
-	else writesa1(0x00+canal,0);
 		
 	writesa1(0x08+canal,notassa[freqindex]); 			/* Frequência */
 		
 	if (canal==0 || canal==1)
 	{
 		if (canal==0)
-		{
-			hi=(int)(octsa[0][0]/16);
-			oct=hi*16+oitavasa[canal];
-		}
+			octsa[0][0]=(octsa[0][0] & 0xF0)+oitavasa[canal];
 		else
-		{
-			hi=(int)(octsa[0][0]/16);
-			lo=(int)(octsa[0][0]-hi*16);
-			oct=oitavasa[canal]*16+lo;
-		}
-		octsa[0][0]=oct;
+			octsa[0][0]=(oitavasa[canal]<<4)+(octsa[0][0] & 0X0F);
+		
 		writesa1(0x010,octsa[0][0]);  			/* Oitava */
 	}
 		
 	if (canal==2 || canal==3)
 	{
 		if (canal==2)
-		{
-			hi=(int)(octsa[0][1]/16);
-			oct=hi*16+oitavasa[canal];
-		}
+			octsa[0][1]=(octsa[0][1] & 0xF0)+oitavasa[canal];
 		else
-		{
-			hi=(int)(octsa[0][1]/16);
-			lo=(int)(octsa[0][1]-hi*16);
-			oct=oitavasa[canal]*16+lo;
-		}
-		octsa[0][1]=oct;
+			octsa[0][1]=(oitavasa[canal]<<4)+(octsa[0][1] & 0X0F);
+
 		writesa1(0x011,octsa[0][1]);  			/* Oitava */
 	}
 		
 	if (canal==4 || canal==5)
 	{
 		if (canal==4)
-		{
-			hi=(int)(octsa[0][2]/16);
-			oct=hi*16+oitavasa[canal];
-		}
+			octsa[0][2]=(octsa[0][2] & 0xF0)+oitavasa[canal];
 		else
-		{
-			hi=(int)(octsa[0][2]/16);
-			lo=(int)(octsa[0][2]-hi*16);
-			oct=oitavasa[canal]*16+lo;
-		}
-		octsa[0][2]=oct;
+			octsa[0][2]=(oitavasa[canal]<<4)+(octsa[0][2] & 0X0F);
+
 		writesa1(0x012,octsa[0][2]);  			/* Oitava */
 	}
 		
@@ -690,11 +654,6 @@ void carregapatsa(void)
 	pattern=songpos[position];
 	py=0;
 	
-/*	textbackground(0);
-	textcolor(14);
-	gotoxy(1,5);
-	cprintf("Position - %d , Pattern - %d  \n\n",position,pattern);
-*/
 	y=0;
 	for (i=pattern*SIZEPATINFOSA; i<((pattern*SIZEPATINFOSA)+SIZEPATINFOSA); i+=SIZEROWSA)
 	{
@@ -703,20 +662,13 @@ void carregapatsa(void)
 		{
 			
 			/* Byte 0 - Frequência, Oitava e Número do Efeito */
-			hi=(int)(patinfosa[i+j+0]/64);
-			lo=(int)(patinfosa[i+j+0]-hi*64);
-			
-			saefectnum[y][x]=hi;
-			
-			hi=(int)(lo/16);
-			lo=(int)(lo-hi*16);
-	
-			saoct[y][x]=hi;
-			safreq[y][x]=lo;
+			saefectnum[y][x]=(patinfosa[i+j+0] & 0xC0)>>6;
+			saoct[y][x]=(patinfosa[i+j+0] & 0x30)>>4;
+			safreq[y][x]=(patinfosa[i+j+0] & 0X0F);
 			
 			/* Byte 1 - Valor do Efeito e Número do Sample */
-			hi=(int)(patinfosa[i+j+1]/32);
-			lo=(int)(patinfosa[i+j+1]-hi*32);
+			hi=(patinfosa[i+j+1] & 0xE0)>>5;
+			lo=(patinfosa[i+j+1] & 0X1F);
 			
 			switch (saefectnum[y][x])
 			{
@@ -775,7 +727,6 @@ void playmusicasa(void)
 				canalinstsa[j]=sisa;
 				
 				precriasomsa(j,safreq[i][j]);
-			//	criasomsa(j,safreq[i][j]);
 				
 			}
 		}
@@ -784,15 +735,12 @@ void playmusicasa(void)
 		if (salta==0)
 		{
 			
-		//	delay(125);
-	
 			row++;
 			if (row==64)
 			{
 				row=0;
 				position++;
 				carregapatsa();
-			//	printpatsa();
 			}
 		}
 		
@@ -802,7 +750,6 @@ void playmusicasa(void)
 			row=0;
 			position++;
 			carregapatsa();
-		//	printpatsa();
 		}
 		
 		/* Salta para a Posição definida pelo Parâmetro */
@@ -811,7 +758,6 @@ void playmusicasa(void)
 			row=0;
 			position=saltap;
 			carregapatsa();
-		//	printpatsa();
 		}
 			
 	}
