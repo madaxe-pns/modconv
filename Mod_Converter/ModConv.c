@@ -747,10 +747,6 @@ void screenclose(void)
 	
 	_setcursortype(_NORMALCURSOR);
 	
-//	for (i=0; i<16; i++) printf("%d-%d    %d-%d\n",i,saminstay[0][i],i+15,saminstay[0][i+15]);
-//	for (i=0; i<16; i++) printf("%d-%d    %d-%d\n",i,saminstfm[0][i],i+15,saminstfm[0][i+15]);
-//	for (i=0; i<16; i++) printf("%d-%d    %d-%d\n",i,saminstsa[0][i],i+15,saminstsa[0][i+15]);
-	
 }
 
 /* Liberta a Memória Alocada */
@@ -1215,18 +1211,18 @@ void carregapat(void)
 		x=0;
 		for(j=0; j<SIZEROWMOD; j+=4)
 		{
-			hi=(int)(patinfo[i+j+0]/16);
-			lo=(int)(patinfo[i+j+0]-hi*16);
+			hi=(patinfo[i+j+0] & 0xF0);
+			lo=(patinfo[i+j+0] & 0x0F);
 	
-			period[y][x]=lo*256+patinfo[i+j+1];			/* Frequencia */
+			period[y][x]=(lo<<8)+patinfo[i+j+1];		/* Frequencia */
 			stpcpy(nota[y][x],convfrnt(period[y][x]));
 		
-			lo=(int)(patinfo[i+j+2]/16);				/* Sample */
-			samplenum[y][x]=hi*16+lo;
+			lo=(patinfo[i+j+2] & 0xF0)>>4;				/* Sample */
+			samplenum[y][x]=hi+lo;
 	
-			efectnum[y][x]=(int)(patinfo[i+j+2]-lo*16);	/* Número do Efeito */
+			efectnum[y][x]=(patinfo[i+j+2] & 0x0F);		/* Número do Efeito */
 			efectpar[y][x]=patinfo[i+j+3];				/* Parâmetro do Efeito */
-			
+						
 			x++;
 		}
 		y++;
@@ -2426,10 +2422,6 @@ void navegamod(void)
 			navegasam();
 		}
 		
-		/* Temporário */
-	//	gotoxy(1,9);
-	//	printf("%d ",KB_code);
-			
 	}
 	while (estado==0);
 	
@@ -3287,16 +3279,18 @@ void convertmodfm(void)
 			x=0;
 			for(j=0; j<SIZEROWMOD; j+=4)
 			{
-				hi=(int)(patinfo[i+j+0]/16);
-				lo=(int)(patinfo[i+j+0]-hi*16);
+				
+				hi=(patinfo[i+j+0] & 0xF0);
+				lo=(patinfo[i+j+0] & 0x0F);
 	
-				period[y][x]=lo*256+patinfo[i+j+1];
+				period[y][x]=(lo<<8)+patinfo[i+j+1];		/* Frequencia */
 		
-				lo=(int)(patinfo[i+j+2]/16);
-				samplenum[y][x]=hi*16+lo;
+				lo=(patinfo[i+j+2] & 0xF0)>>4;				/* Sample */
+				samplenum[y][x]=hi+lo;
 	
-				efectnum[y][x]=(int)(patinfo[i+j+2]-lo*16);
-				efectpar[y][x]=patinfo[i+j+3];
+				efectnum[y][x]=(patinfo[i+j+2] & 0x0F);		/* Número do Efeito */
+				efectpar[y][x]=patinfo[i+j+3];				/* Parâmetro do Efeito */
+				
 				
 				/* Percorre todos os Canais FM */
 				for (p=0; p<FMNUNCANAIS; p++)
@@ -3336,9 +3330,9 @@ void convertmodfm(void)
 						/* Verifica se o Sample tem um Instrumento FM Atribuído */
 						if (saminstfm[0][fmsam-1]!=128)
 						{
-							patinfofm[h+p*2]=fmefect*64+oitavafm*16+freqfm;
+							patinfofm[h+p*2]=(fmefect<<6)+(oitavafm<<4)+freqfm;
 							if (fmefect==1) patinfofm[h+p*2+1]=fmfectpar;
-							else patinfofm[h+p*2+1]=fmfectpar*32+fmsam;
+							else patinfofm[h+p*2+1]=(fmfectpar<<5)+fmsam;
 						}
 						else
 						{
@@ -3518,20 +3512,13 @@ void carregapatfm(void)
 		{
 			
 			/* Byte 0 - Frequência, Oitava e Número do Efeito */
-			hi=(int)(patinfofm[i+j+0]/64);
-			lo=(int)(patinfofm[i+j+0]-hi*64);
-			
-			fmefectnum[y][x]=hi;
-			
-			hi=(int)(lo/16);
-			lo=(int)(lo-hi*16);
-	
-			fmoct[y][x]=hi;
-			fmfreq[y][x]=lo;
+			fmefectnum[y][x]=(patinfofm[i+j+0] & 0xC0)>>6;
+			fmoct[y][x]=(patinfofm[i+j+0] & 0x30)>>4;
+			fmfreq[y][x]=(patinfofm[i+j+0] & 0X0F);
 			
 			/* Byte 1 - Valor do Efeito e Número do Sample */
-			hi=(int)(patinfofm[i+j+1]/32);
-			lo=(int)(patinfofm[i+j+1]-hi*32);
+			hi=(patinfofm[i+j+1] & 0xE0)>>5;
+			lo=(patinfofm[i+j+1] & 0X1F);
 			
 			switch (fmefectnum[y][x])
 			{
@@ -4332,17 +4319,19 @@ void convertmodsa(void)
 			x=0;
 			for(j=0; j<SIZEROWMOD; j+=4)
 			{
-				hi=(int)(patinfo[i+j+0]/16);
-				lo=(int)(patinfo[i+j+0]-hi*16);
-	
-				period[y][x]=lo*256+patinfo[i+j+1];
-		
-				lo=(int)(patinfo[i+j+2]/16);
-				samplenum[y][x]=hi*16+lo;
-	
-				efectnum[y][x]=(int)(patinfo[i+j+2]-lo*16);
-				efectpar[y][x]=patinfo[i+j+3];
 				
+				hi=(patinfo[i+j+0] & 0xF0);
+				lo=(patinfo[i+j+0] & 0x0F);
+	
+				period[y][x]=(lo<<8)+patinfo[i+j+1];		/* Frequencia */
+				stpcpy(nota[y][x],convfrnt(period[y][x]));
+		
+				lo=(patinfo[i+j+2] & 0xF0)>>4;				/* Sample */
+				samplenum[y][x]=hi+lo;
+	
+				efectnum[y][x]=(patinfo[i+j+2] & 0x0F);		/* Número do Efeito */
+				efectpar[y][x]=patinfo[i+j+3];				/* Parâmetro do Efeito */
+								
 				/* Percorre todos os Canais SAA1099 */
 				for (p=0; p<SAANUNCANAIS; p++)
 				{
@@ -4381,9 +4370,9 @@ void convertmodsa(void)
 						/* Verifica se o Sample tem um Instrumento SAA1099 Atribuído */
 						if (saminstsa[0][sasam-1]!=128)
 						{
-							patinfosa[h+p*2]=saefect*64+oitavasacnv*16+freqsacnv;
+							patinfosa[h+p*2]=(saefect<<6)+(oitavasacnv<<4)+freqsacnv;
 							if (saefect==1) patinfosa[h+p*2+1]=safectpar;
-							else patinfosa[h+p*2+1]=safectpar*32+sasam;
+							else patinfosa[h+p*2+1]=(safectpar<<5)+sasam;
 						}
 						else
 						{
@@ -4559,20 +4548,13 @@ void carregapatsa(void)
 		{
 			
 			/* Byte 0 - Frequência, Oitava e Número do Efeito */
-			hi=(int)(patinfosa[i+j+0]/64);
-			lo=(int)(patinfosa[i+j+0]-hi*64);
-			
-			saefectnum[y][x]=hi;
-			
-			hi=(int)(lo/16);
-			lo=(int)(lo-hi*16);
-	
-			saoct[y][x]=hi;
-			safreq[y][x]=lo;
+			saefectnum[y][x]=(patinfosa[i+j+0] & 0xC0)>>6;
+			saoct[y][x]=(patinfosa[i+j+0] & 0x30)>>4;
+			safreq[y][x]=(patinfosa[i+j+0] & 0X0F);
 			
 			/* Byte 1 - Valor do Efeito e Número do Sample */
-			hi=(int)(patinfosa[i+j+1]/32);
-			lo=(int)(patinfosa[i+j+1]-hi*32);
+			hi=(patinfosa[i+j+1] & 0xE0)>>5;
+			lo=(patinfosa[i+j+1] & 0X1F);
 			
 			switch (saefectnum[y][x])
 			{
@@ -4670,9 +4652,7 @@ void navegapatsa(void)
 					if (playenvlsa[i]!=0)
 					{
 						sisa=playenvlsa[i];
-					//	sisa=canalinstsa[i];
 						envelopsa(i);
-					//	criasomsa(i,freqsa[i]);
 						setvolsa(i);
 					}
 
@@ -4844,14 +4824,11 @@ void playmusicasa(void)
 			//	volumesa[j]=instregsa[sisa].volume;
 				volumesa[j]=volinstsa[sasamplenum[i][j]-1];
 				
-				//canalinstsa[j]=sisa;
-			
 				oitavasa[j]=saoct[i][j]+octinstsa[sasamplenum[i][j]-1];	/* Correcção da Oitava */
 				
 				if (safreq[i][j]>9) oitavasa[j]++;
 				
 				precriasomsa(j,safreq[i][j]);
-			//	criasomsa(j,safreq[i][j]);
 				
 			}
 		}
@@ -5369,16 +5346,19 @@ void convertmoday(void)
 			ayfectpar=0;				/* Parâmetro do Efeito	*/
 			for(j=0; j<SIZEROWMOD; j+=4)
 			{
-				hi=(int)(patinfo[i+j+0]/16);
-				lo=(int)(patinfo[i+j+0]-hi*16);
+						
+				hi=(patinfo[i+j+0] & 0xF0);
+				lo=(patinfo[i+j+0] & 0x0F);
 	
-				period[y][x]=lo*256+patinfo[i+j+1];
+				period[y][x]=(lo<<8)+patinfo[i+j+1];		/* Frequencia */
+				stpcpy(nota[y][x],convfrnt(period[y][x]));
 		
-				lo=(int)(patinfo[i+j+2]/16);
-				samplenum[y][x]=hi*16+lo;
+				lo=(patinfo[i+j+2] & 0xF0)>>4;				/* Sample */
+				samplenum[y][x]=hi+lo;
 	
-				efectnum[y][x]=(int)(patinfo[i+j+2]-lo*16);
-				efectpar[y][x]=patinfo[i+j+3];
+				efectnum[y][x]=(patinfo[i+j+2] & 0x0F);		/* Número do Efeito */
+				efectpar[y][x]=patinfo[i+j+3];				/* Parâmetro do Efeito */
+				
 				
 				/* Percorre todos os Canais AY-3-8912 */
 				for (p=0; p<AYNUNCANAIS; p++)
@@ -5414,43 +5394,31 @@ void convertmoday(void)
 						if (saminstay[0][aysam-1]!=128)
 						{
 							/* Byte 0,1,2 */
-							hi=(int)(aysam/4);
-							lo=(int)(aysam-hi*4);
-							patinfoay[h+p]=lo*64+oitavaaycnv*16+freqaycnv;
+							hi=(aysam & 0x0C)>>2;
+							lo=(aysam & 0x03);
+							patinfoay[h+p]=(lo<<6)+(oitavaaycnv<<4)+freqaycnv;
 													
 							/* Byte 3 */
 							switch (p)
 							{
 								case 0:
 								{
-									hic=(int)(patinfoay[h+3]/64);
-									loc=(int)(patinfoay[h+3]-hic*64);
-									hic=(int)(loc/4);
-									patinfoay[h+3]=hi*64+hic*4+ayefect;
-																	
-								//	patinfoay[h+3]=hi*64+ayefect;
+									hic=(patinfoay[h+3] & 0x3F)>>2;
+									patinfoay[h+3]=(hi<<6)+(hic<<2)+ayefect;
 									break;
 								}
 								case 1: 
 								{
-									hic=(int)(patinfoay[h+3]/64);
-									
-									loc=(int)(patinfoay[h+3]-hic*64);
-									
-									hic2=(int)(loc/4);
-									
-									loc2=(int)(hic2/4);
-									hic2=(int)(hic2-loc2*4);
-									
-									patinfoay[h+3]=hic*64+hi*16+hic2*4+ayefect;
-								
-								//	patinfoay[h+3]=hic*64+hi*16+ayefect;
+									hic=(patinfoay[h+3])>>2;									
+									loc=(hic & 0x03);									
+									hic=hic>>4;									
+									patinfoay[h+3]=(hic<<6)+(hi<<4)+(loc<<2)+ayefect;
 									break;
 								}
 								case 2: 
 								{
-									hic=(int)(patinfoay[h+3]/16);
-									patinfoay[h+3]=hic*16+hi*4+ayefect;
+									hic=(patinfoay[h+3] & 0xF0);
+									patinfoay[h+3]=hic+(hi<<2)+ayefect;								
 									break;
 								}
 							}
@@ -5611,7 +5579,6 @@ void carregapatay(void)
 
 	int i,j;
 	int x,y;
-	int loc,hic;
 	
 	pattern=songpos[position];
 	py=0;
@@ -5629,50 +5596,20 @@ void carregapatay(void)
 		{
 			
 			/* Byte 0,1,2 - Frequência, Oitava e Low Número do Instrumento */
-			hi=(int)(patinfoay[i+j+0]/64);
-			lo=(int)(patinfoay[i+j+0]-hi*64);
-			
-			aysamplenum[y][x]=hi;
-			
-			hi=(int)(lo/16);
-			lo=(int)(lo-hi*16);
-	
-			ayoct[y][x]=hi;
-			ayfreq[y][x]=lo;
+			aysamplenum[y][x]=(patinfoay[i+j+0] & 0xC0)>>6;
+			ayoct[y][x]=(patinfoay[i+j+0] & 0x30)>>4;
+			ayfreq[y][x]=(patinfoay[i+j+0] & 0X0F);		
 			
 			/* Byte 3 - Hi Número do Instrumento e Número do Efeito */
 			switch (j)
 			{
-				case 0:
-				{
-					hi=(int)(patinfoay[i+3]/64);
-					loc=(int)(patinfoay[i+3]-hi*64);
-					hic=(int)(loc/4);
-					lo=(int)(loc-hic*4);
-					break;
-				}
-				case 1:
-				{
-					hi=(int)(patinfoay[i+3]/64);
-					loc=(int)(patinfoay[i+3]-hi*64);
-					hi=(int)(loc/16);
-					hic=(int)(loc-hi*16);
-					loc=(int)(hic/4);
-					lo=(int)(hic-loc*4);
-					break;
-				}
-				case 2:
-				{
-					hi=(int)(patinfoay[i+3]/16);
-					loc=(int)(patinfoay[i+3]-hi*16);
-					hi=(int)(loc/4);
-					lo=(int)(loc-hi*4);
-					break;
-				}
+				case 0:hi=((patinfoay[i+3] & 0xC0)>>6);break;
+				case 1:hi=((patinfoay[i+3] & 0x30)>>4);break;
+				case 2:hi=((patinfoay[i+3] & 0x0C)>>2);break;
 			}
 			
-			aysamplenum[y][x]=hi*4+aysamplenum[y][x];
-			ayefectnum[y][x]=lo;
+			aysamplenum[y][x]=(hi<<2)+aysamplenum[y][x];
+			ayefectnum[y][x]=(patinfoay[i+3] & 0X03);
 		
 			if (ayefectnum[y][x] & 1)
 			{
@@ -5775,7 +5712,6 @@ void navegapatay(void)
 					{
 						siay=playenvlay[i];
 						envelopay(i);
-					//	criasomay(i,freqay[i]);
 						setvolay(i);
 					}
 
@@ -5952,7 +5888,6 @@ void playmusicaay(void)
 				if (ayfreq[i][j]>9) oitavaay[j]++;
 				
 				precriasomay(j,ayfreq[i][j]);
-			//	criasomay(j,ayfreq[i][j]);
 				
 			}
 		}
@@ -6260,8 +6195,8 @@ void criasomfm(int canalg,int canalo,int freqindex)
 
 	freq=notasfm[freqindex];
 		
-	freqh=(int)(freq/256);
-	freql=(int)(freq-(freqh*256));
+	freqh=(freq & 0xFF00)>>8;
+	freql=(freq & 0X00FF);
 	
 	if (playfm==0)
 	{
@@ -6458,9 +6393,6 @@ void precriasomsa(unsigned char canal,int freqindex)
 	
 	getenvlsa(canal);
 	
-/*	if (playenvlsa[canal]!=0) freqsa[canal]=freqindex;
-	else criasomsa(canal,freqindex); */
-	
 	criasomsa(canal,freqindex);
 	
 }
@@ -6472,7 +6404,7 @@ void setvolsa(unsigned char canal)
 	if (cnlonsa[canal]==1)
 	{
 		if (canal==0 || canal==2 || canal==4)						/* Estéreo */
-				writesa1(0x00+canal,volumesa[canal]*16);
+				writesa1(0x00+canal,volumesa[canal]<<4);
 			else
 				writesa1(0x00+canal,volumesa[canal]);
 	}
@@ -6489,7 +6421,7 @@ void criasomsa(unsigned char canal,int freqindex)
 	if (cnlonsa[canal]==1)
 	{
 		if (canal==0 || canal==2 || canal==4)			/* Volume */
-			writesa1(0x00+canal,volumesa[canal]*16);
+			writesa1(0x00+canal,volumesa[canal]<<4);
 		else
 			writesa1(0x00+canal,volumesa[canal]);
 	}
@@ -6500,51 +6432,30 @@ void criasomsa(unsigned char canal,int freqindex)
 	if (canal==0 || canal==1)
 	{
 		if (canal==0)
-		{
-			hi=(int)(octsa[0][0]/16);
-			oct=hi*16+oitavasa[canal];
-		}
+			octsa[0][0]=(octsa[0][0] & 0xF0)+oitavasa[canal];
 		else
-		{
-			hi=(int)(octsa[0][0]/16);
-			lo=(int)(octsa[0][0]-hi*16);
-			oct=oitavasa[canal]*16+lo;
-		}
-		octsa[0][0]=oct;
+			octsa[0][0]=(oitavasa[canal]<<4)+(octsa[0][0] & 0X0F);
+	
 		writesa1(0x010,octsa[0][0]);  			/* Oitava */
 	}
 		
 	if (canal==2 || canal==3)
 	{
 		if (canal==2)
-		{
-			hi=(int)(octsa[0][1]/16);
-			oct=hi*16+oitavasa[canal];
-		}
+			octsa[0][1]=(octsa[0][1] & 0xF0)+oitavasa[canal];
 		else
-		{
-			hi=(int)(octsa[0][1]/16);
-			lo=(int)(octsa[0][1]-hi*16);
-			oct=oitavasa[canal]*16+lo;
-		}
-		octsa[0][1]=oct;
+			octsa[0][1]=(oitavasa[canal]<<4)+(octsa[0][1] & 0X0F);
+	
 		writesa1(0x011,octsa[0][1]);  			/* Oitava */
 	}
 		
 	if (canal==4 || canal==5)
 	{
 		if (canal==4)
-		{
-			hi=(int)(octsa[0][2]/16);
-			oct=hi*16+oitavasa[canal];
-		}
+			octsa[0][2]=(octsa[0][2] & 0xF0)+oitavasa[canal];
 		else
-		{
-			hi=(int)(octsa[0][2]/16);
-			lo=(int)(octsa[0][2]-hi*16);
-			oct=oitavasa[canal]*16+lo;
-		}
-		octsa[0][2]=oct;
+			octsa[0][2]=(oitavasa[canal]<<4)+(octsa[0][2] & 0X0F);
+	
 		writesa1(0x012,octsa[0][2]);  			/* Oitava */
 	}
 		
@@ -6671,9 +6582,6 @@ void precriasomay(unsigned char canal,int freqindex)
 	
 	getenvlay(canal);
 	
-//	if (playenvlay[canal]!=0) freqay[canal]=freqindex;
-//	else criasomay(canal,freqindex);
-	
 	criasomay(canal,freqindex);
 	
 }
@@ -6683,7 +6591,7 @@ void setvolay(unsigned char canal)
 {
 	
 	if (cnlonay[canal]==1)
-			writesa1(0x00+canal,volumeay[canal]*16+volumeay[canal]);	/* Mono */
+			writesa1(0x00+canal,(volumeay[canal]<<4)+volumeay[canal]);	/* Mono */
 	else
 		writesa1(0x00+canal,0);
 				
@@ -6695,7 +6603,7 @@ void criasomay(unsigned char canal,int freqindex)
 	
 	unsigned char oct;
 	
-	if (cnlonay[canal]==1) writesa1(0x00+canal,volumeay[canal]*16+volumeay[canal]);	/* Volume */
+	if (cnlonay[canal]==1) writesa1(0x00+canal,(volumeay[canal]<<4)+volumeay[canal]);	/* Volume */
 	else writesa1(0x00+canal,0);
 		
 	writesa1(0x08+canal,notasay[freqindex]); 			/* Frequência */
@@ -6703,34 +6611,20 @@ void criasomay(unsigned char canal,int freqindex)
 	if (canal==0 || canal==1)
 	{
 		if (canal==0)
-		{
-			hi=(int)(octay[0][0]/16);
-			oct=hi*16+oitavaay[canal];
-		}
+			octay[0][0]=(octay[0][0] & 0xF0)+oitavaay[canal];
 		else
-		{
-			hi=(int)(octay[0][0]/16);
-			lo=(int)(octay[0][0]-hi*16);
-			oct=oitavaay[canal]*16+lo;
-		}
-		octay[0][0]=oct;
+			octay[0][0]=(oitavaay[canal]<<4)+(octay[0][0] & 0X0F);
+		
 		writesa1(0x010,octay[0][0]);  			/* Oitava */
 	}
 		
 	if (canal==2 || canal==3)
 	{
 		if (canal==2)
-		{
-			hi=(int)(octay[0][1]/16);
-			oct=hi*16+oitavaay[canal];
-		}
+			octay[0][1]=(octay[0][1] & 0xF0)+oitavaay[canal];
 		else
-		{
-			hi=(int)(octay[0][1]/16);
-			lo=(int)(octay[0][1]-hi*16);
-			oct=oitavaay[canal]*16+lo;
-		}
-		octay[0][1]=oct;
+			octay[0][1]=(oitavaay[canal]<<4)+(octay[0][1] & 0X0F);
+		
 		writesa1(0x011,octay[0][1]);  			/* Oitava */
 	}
 		
