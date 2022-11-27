@@ -555,9 +555,6 @@ void carregapatay(void)
 
 	int i,j;
 	int x,y;
-	int loc,hic;
-
-/*	char o;*/
 	
 	pattern=songpos[position];
 	py=0;
@@ -570,50 +567,21 @@ void carregapatay(void)
 		{
 			
 			/* Byte 0,1,2 - Frequência, Oitava e Low Número do Instrumento */
-			hi=(int)(patinfoay[i+j+0]/64);
-			lo=(int)(patinfoay[i+j+0]-hi*64);
+			aysamplenum[y][x]=(patinfoay[i+j+0] & 0xC0)>>6;
+			ayoct[y][x]=(patinfoay[i+j+0] & 0x30)>>4;
+			ayfreq[y][x]=(patinfoay[i+j+0] & 0X0F);
 			
-			aysamplenum[y][x]=hi;
-			
-			hi=(int)(lo/16);
-			lo=(int)(lo-hi*16);
-	
-			ayoct[y][x]=hi;
-			ayfreq[y][x]=lo;
 			
 			/* Byte 3 - Hi Número do Instrumento e Número do Efeito */
 			switch (j)
 			{
-				case 0:
-				{
-					hi=(int)(patinfoay[i+3]/64);
-					loc=(int)(patinfoay[i+3]-hi*64);
-					hic=(int)(loc/4);
-					lo=(int)(loc-hic*4);
-					break;
-				}
-				case 1:
-				{
-					hi=(int)(patinfoay[i+3]/64);
-					loc=(int)(patinfoay[i+3]-hi*64);
-					hi=(int)(loc/16);
-					hic=(int)(loc-hi*16);
-					loc=(int)(hic/4);
-					lo=(int)(hic-loc*4);
-					break;
-				}
-				case 2:
-				{
-					hi=(int)(patinfoay[i+3]/16);
-					loc=(int)(patinfoay[i+3]-hi*16);
-					hi=(int)(loc/4);
-					lo=(int)(loc-hi*4);
-					break;
-				}
+				case 0:hi=((patinfoay[i+3] & 0xC0)>>6);break;
+				case 1:hi=((patinfoay[i+3] & 0x30)>>4);break;
+				case 2:hi=((patinfoay[i+3] & 0x0C)>>2);break;
 			}
 			
-			aysamplenum[y][x]=hi*4+aysamplenum[y][x];
-			ayefectnum[y][x]=lo;
+			aysamplenum[y][x]=(hi<<2)+aysamplenum[y][x];
+			ayefectnum[y][x]=(patinfoay[i+3] & 0X03);
 		
 			if (ayefectnum[y][x] & 1)
 			{
@@ -801,19 +769,19 @@ void envelopay(unsigned char canal)
 void setvolay(unsigned char canal)
 {
 	
-	if (canal==0) /* Giaccess(volumeay[canal],REGAY+8); 	/* Volume do Canal A */
+	if (canal==0)					/* Volume do Canal A */
 	{
 		*REGSEL=8;
 		*REGDAT=volumeay[canal];
 	}
 		
-	if (canal==1) /* Giaccess(volumeay[canal],REGAY+9); 	/* Volume do Canal B */
+	if (canal==1)					/* Volume do Canal B */
 	{
 		*REGSEL=9;
 		*REGDAT=volumeay[canal];
 	}
 	
-	if (canal==2) /* Giaccess(volumeay[canal],REGAY+10);	/* Volume do Canal C */
+	if (canal==2)					/* Volume do Canal C */
 	{
 		*REGSEL=10;
 		*REGDAT=volumeay[canal];
@@ -829,9 +797,6 @@ void precriasomay(unsigned char canal,int freqindex)
 	
 	getenvlay(canal);
 	
-/*	if (playenvlay[canal]!=0) freqay[canal]=freqindex;
-	else criasomay(canal,freqindex); */
-
 	criasomay(canal,freqindex);
 	
 }
