@@ -393,8 +393,8 @@ void criasomfm(int canalg,int canalo,int freqindex)
 
 	freq=notasfm[freqindex];
 		
-	freqh=(int)(freq/256);
-	freql=(int)(freq-(freqh*256));
+	freqh=(freq & 0xFF00)>>8;
+	freql=(freq & 0X00FF);
 	
 	/* Desliga o Canal */
 	regb0=0*1+4*oitavafm+freqh;
@@ -421,8 +421,7 @@ void criasomfm(int canalg,int canalo,int freqindex)
 	writefm(0xC0+canalg,instreg[sifm].regc0);  	/* Feedback Modulation, FM Synthesis ON/OFF */
 	writefm(0xA0+canalg,freql); 				/* Frequência Low Byte */
 	
-//	if (cnlonfm[canalg]==1)
-		writefm(0xB0+canalg,regb0);  			/* Play Note, Oitava, Frequência Hi Byte */
+	writefm(0xB0+canalg,regb0);  			/* Play Note, Oitava, Frequência Hi Byte */
 			
 }
 
@@ -515,8 +514,8 @@ void criasomsb(int canalg,int canalo,int freqindex)
 
 	freq=notasfm[freqindex];
 		
-	freqh=(int)(freq/256);
-	freql=(int)(freq-(freqh*256));
+	freqh=(freq & 0xFF00)>>8;
+	freql=(freq & 0X00FF);
 
 	if (canalg==0 || canalg==2 || canalg==4 || canalg==6 || canalg==8) /* Speaker Esquerdo */
 	{
@@ -545,8 +544,7 @@ void criasomsb(int canalg,int canalo,int freqindex)
 		writelsb(0xC0+canalg,instreg[sifm].regc0);  	/* Feedback Modulation, FM Synthesis ON/OFF */
 		writelsb(0xA0+canalg,freql); 				/* Frequência Low Byte */
 	
-	//	if (cnlonfm[canalg]==1)
-			writelsb(0xB0+canalg,regb0);  			/* Play Note, Oitava, Frequência Hi Byte */
+		writelsb(0xB0+canalg,regb0);  			/* Play Note, Oitava, Frequência Hi Byte */
 	}
 	else	/* Speaker Direito */
 	{
@@ -575,8 +573,7 @@ void criasomsb(int canalg,int canalo,int freqindex)
 		writersb(0xC0+canalg,instreg[sifm].regc0);  	/* Feedback Modulation, FM Synthesis ON/OFF */
 		writersb(0xA0+canalg,freql); 				/* Frequência Low Byte */
 	
-	//	if (cnlonfm[canalg]==1)
-			writersb(0xB0+canalg,regb0);  			/* Play Note, Oitava, Frequência Hi Byte */
+		writersb(0xB0+canalg,regb0);  			/* Play Note, Oitava, Frequência Hi Byte */
 	}	
 	
 }
@@ -677,11 +674,6 @@ void carregapatfm(void)
 	pattern=songpos[position];
 	py=0;
 	
-//	textbackground(0);
-//	textcolor(14);
-//	gotoxy(1,5);
-//	cprintf("Position - %d , Pattern - %d  \n\n",position,pattern);
-
 	y=0;
 	for (i=pattern*SIZEPATINFOFM; i<((pattern*SIZEPATINFOFM)+SIZEPATINFOFM); i+=SIZEROWFM)
 	{
@@ -690,20 +682,13 @@ void carregapatfm(void)
 		{
 			
 			/* Byte 0 - Frequência, Oitava e Número do Efeito */
-			hi=(int)(patinfofm[i+j+0]/64);
-			lo=(int)(patinfofm[i+j+0]-hi*64);
-			
-			fmefectnum[y][x]=hi;
-			
-			hi=(int)(lo/16);
-			lo=(int)(lo-hi*16);
-	
-			fmoct[y][x]=hi;
-			fmfreq[y][x]=lo;
+			fmefectnum[y][x]=(patinfofm[i+j+0] & 0xC0)>>6;
+			fmoct[y][x]=(patinfofm[i+j+0] & 0x30)>>4;
+			fmfreq[y][x]=(patinfofm[i+j+0] & 0X0F);
 			
 			/* Byte 1 - Valor do Efeito e Número do Sample */
-			hi=(int)(patinfofm[i+j+1]/32);
-			lo=(int)(patinfofm[i+j+1]-hi*32);
+			hi=(patinfofm[i+j+1] & 0xE0)>>5;
+			lo=(patinfofm[i+j+1] & 0X1F);
 			
 			switch (fmefectnum[y][x])
 			{
@@ -776,7 +761,6 @@ void playmusicafm(void)
 				row=0;
 				position++;
 				carregapatfm();
-			//	printpatfm();
 			}
 		}
 		
@@ -786,7 +770,6 @@ void playmusicafm(void)
 			row=0;
 			position++;
 			carregapatfm();
-		//	printpatfm();
 		}
 		
 		/* Salta para a Posição definida pelo Parâmetro */
@@ -795,7 +778,6 @@ void playmusicafm(void)
 			row=0;
 			position=saltap;
 			carregapatfm();
-		//	printpatfm();
 		}
 			
 	}
