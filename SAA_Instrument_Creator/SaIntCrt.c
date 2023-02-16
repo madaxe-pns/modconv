@@ -6,7 +6,7 @@
 /*
 /*  Para compilar: tcc SaIntCrt.c
 /*
-/*  (C) 2022 Penisoft / MadAxe
+/*  (C) 2023 Penisoft / MadAxe
 /*
 */
 
@@ -119,6 +119,7 @@ void writesa7(int reg, int value);
 void getenvlsa(void);
 void envelopsa(void);
 void precriasomsa(int freqindex);
+void setvolsa(void);
 void criasomsa(int freqindex);
 void stopsomsa(void);
 
@@ -167,7 +168,6 @@ int valcolor;
 /* Oitava */
 int oitavasa=2;
 int volumesa;
-int freqsa;
 int playenvlsa;
 int factorsa=5;
 
@@ -254,7 +254,7 @@ void screenclose(void)
 	textcolor(11);
 	cprintf("Philips SAA1099 Instrument Creator 1.3\r\n");
 	textcolor(10);
-	cprintf("(C) 2022 Penisoft / MadAxe\r\n");
+	cprintf("(C) 2023 Penisoft / MadAxe\r\n");
 	
 	_setcursortype(_NORMALCURSOR);
 	
@@ -271,7 +271,7 @@ int inicializa(void)
 	textcolor(11);
 	cprintf("Philips SAA1099 Instrument Creator 1.3\r\n");
 	textcolor(10);
-	cprintf("(C) 2022 Penisoft / MadAxe\r\n\r\n");
+	cprintf("(C) 2023 Penisoft / MadAxe\r\n\r\n");
 	
 	textcolor(15);
 
@@ -429,46 +429,42 @@ void envelopsa(void)
 			}
 		}
 	}
-	else
+
+	/* Sustain */
+	if (envlssa[0]==0 && envlssa[1]>0)
 	{
-		/* Sustain */
-		if (envlssa[1]>0)
+		cntenvlssa[1]--;
+		if (cntenvlssa[1]==0)
 		{
-			cntenvlssa[1]--;
-			if (cntenvlssa[1]==0)
+			cntenvlssa[1]=factorsa*instregsa[sy].sustain;
+			cntenvlsusssa--;
+			if (cntenvlsusssa==0)
 			{
-				cntenvlssa[1]=factorsa*instregsa[sy].sustain;
-				cntenvlsusssa--;
-				if (cntenvlsusssa==0)
+				envlssa[1]=0;
+				if (envlssa[2]==0)
 				{
-					envlssa[1]=0;
-					if (envlssa[2]==0)
-					{
-						volumesa=0;
-						playenvlsa=0;
-					}
+					volumesa=0;
+					playenvlsa=0;
 				}
 			}
-		}	
-		else
-		{
-			/* Decay */
-			if (envlssa[2]>0)
-			{
-				cntenvlssa[2]--;
-				if (cntenvlssa[2]==0)
-				{
-					cntenvlssa[2]=factorsa*instregsa[sy].decay;
-					volumesa--;
-					if (volumesa==0)
-					{
-						envlssa[2]=0;
-						playenvlsa=0;
-					}
-				}
-			}	
 		}
 	}
+	
+	/* Decay */
+	if (envlssa[0]==0 && envlssa[1]==0 && envlssa[2]>0)
+	{
+		cntenvlssa[2]--;
+		if (cntenvlssa[2]==0)
+		{
+			cntenvlssa[2]=factorsa*instregsa[sy].decay;
+			volumesa--;
+			if (volumesa==0)
+			{
+				envlssa[2]=0;
+				playenvlsa=0;
+			}
+		}
+	}	
 	
 	if (playenvlsa==0 && instregsa[sy].repete==1) getenvlsa();
 	
@@ -485,9 +481,19 @@ void precriasomsa(int freqindex)
 	
 	getenvlsa();
 	
-	if (playenvlsa==1) freqsa=freqindex;
-	else criasomsa(freqindex);
+	criasomsa(freqindex);
 	
+}
+
+/* Apenas atualiza o Volume do Canal SAA1099 em caso de Envelope */
+void setvolsa(void)
+{
+	
+	writesa1(0x00,volumesa*16+volumesa);		/* Volume */
+	
+	writesa1(0x014,instregsa[sy].freqenb); 		/* Frequência Enable */
+	writesa1(0x015,instregsa[sy].noiseenb);		/* Noise Enable */
+				
 }
 
 /* Produz um Som SAA1099 */
@@ -822,7 +828,7 @@ void navega(void)
 			if (playenvlsa==1)
 			{
 				envelopsa();
-				criasomsa(freqsa);
+				setvolsa();
 			}
 		}
 		
