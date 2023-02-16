@@ -2,7 +2,7 @@
 
    Atari YM Player 1.2
 	
-    (C) 2022 Penisoft
+    (C) 2023 Penisoft
 	
 */
 
@@ -479,7 +479,7 @@ void printmenu(void)
 	
 	Goto_pos(25,0);
     Ink(1);
-	printf("(C) 2022 Penisoft / MadAxe");
+	printf("(C) 2023 Penisoft / MadAxe");
 	
 	
 	
@@ -537,7 +537,7 @@ void printdados(void)
 	
 	Goto_pos(25,0);
     Ink(1);
-	printf("(C) 2022 Penisoft / MadAxe");
+	printf("(C) 2023 Penisoft / MadAxe");
 	
 }
 
@@ -720,46 +720,42 @@ void envelopay(unsigned char canal)
 			}
 		}
 	}
-	else
+
+	/* Sustain */
+	if (envlsay[canal][0]==0 && envlsay[canal][1]>0)
 	{
-		/* Sustain */
-		if (envlsay[canal][1]>0)
+		cntenvlsay[canal][1]--;
+		if (cntenvlsay[canal][1]==0)
 		{
-			cntenvlsay[canal][1]--;
-			if (cntenvlsay[canal][1]==0)
+			cntenvlsay[canal][1]=factoray*instregay[siay].sustain;
+			cntenvlsussay[canal]--;
+			if (cntenvlsussay[canal]==0)
 			{
-				cntenvlsay[canal][1]=factoray*instregay[siay].sustain;
-				cntenvlsussay[canal]--;
-				if (cntenvlsussay[canal]==0)
+				envlsay[canal][1]=0;
+				if (envlsay[canal][2]==0)
 				{
-					envlsay[canal][1]=0;
-					if (envlsay[canal][2]==0)
-					{
-						volumeay[canal]=0;
-						playenvlay[canal]=0;
-					}
+					volumeay[canal]=0;
+					playenvlay[canal]=0;
 				}
 			}
-		}	
-		else
-		{
-			/* Decay */
-			if (envlsay[canal][2]>0)
-			{
-				cntenvlsay[canal][2]--;
-				if (cntenvlsay[canal][2]==0)
-				{
-					cntenvlsay[canal][2]=factoray*instregay[siay].decay;
-					volumeay[canal]--;
-					if (volumeay[canal]==0)
-					{
-						envlsay[canal][2]=0;
-						playenvlay[canal]=0;
-					}
-				}
-			}	
 		}
-	}
+	}	
+
+	/* Decay */
+	if (envlsay[canal][0]==0 && envlsay[canal][1]==0 && envlsay[canal][2]>0)
+	{
+		cntenvlsay[canal][2]--;
+		if (cntenvlsay[canal][2]==0)
+		{
+			cntenvlsay[canal][2]=factoray*instregay[siay].decay;
+			volumeay[canal]--;
+			if (volumeay[canal]==0)
+			{
+				envlsay[canal][2]=0;
+				playenvlay[canal]=0;
+			}
+		}
+	}	
 	
 	if (playenvlay[canal]==0 && instregay[siay].repete==1) getenvlay(canal);
 	
