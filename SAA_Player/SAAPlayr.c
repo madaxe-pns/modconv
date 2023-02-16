@@ -210,7 +210,7 @@ void screenopen(void)
 	textcolor(11);
 	cprintf(" SAA Player 1.5 - ");
 	textcolor(10);
-	cprintf(" (C) 2022 Penisoft / MadAxe\r\n");
+	cprintf(" (C) 2023 Penisoft / MadAxe\r\n");
 	
 	textcolor(7);
 	
@@ -232,7 +232,7 @@ void screenclose(void)
 	textcolor(11);
 	cprintf("SAA Player 1.5\r\n");
 	textcolor(10);
-	cprintf("(C) 2022 Penisoft / MadAxe\r\n");
+	cprintf("(C) 2023 Penisoft / MadAxe\r\n");
 	
 	_setcursortype(_NORMALCURSOR);
 	
@@ -425,46 +425,42 @@ void envelopsa(unsigned char canal)
 			}
 		}
 	}
-	else
+
+	/* Sustain */
+	if (envlssa[canal][0]==0 && envlssa[canal][1]>0)
 	{
-		/* Sustain */
-		if (envlssa[canal][1]>0)
+		cntenvlssa[canal][1]--;
+		if (cntenvlssa[canal][1]==0)
 		{
-			cntenvlssa[canal][1]--;
-			if (cntenvlssa[canal][1]==0)
+			cntenvlssa[canal][1]=factorsa*instregsa[sisa].sustain;
+			cntenvlsusssa[canal]--;
+			if (cntenvlsusssa[canal]==0)
 			{
-				cntenvlssa[canal][1]=factorsa*instregsa[sisa].sustain;
-				cntenvlsusssa[canal]--;
-				if (cntenvlsusssa[canal]==0)
+				envlssa[canal][1]=0;
+				if (envlssa[canal][2]==0)
 				{
-					envlssa[canal][1]=0;
-					if (envlssa[canal][2]==0)
-					{
-						volumesa[canal]=0;
-						playenvlsa[canal]=0;
-					}
+					volumesa[canal]=0;
+					playenvlsa[canal]=0;
 				}
 			}
-		}	
-		else
-		{
-			/* Decay */
-			if (envlssa[canal][2]>0)
-			{
-				cntenvlssa[canal][2]--;
-				if (cntenvlssa[canal][2]==0)
-				{
-					cntenvlssa[canal][2]=factorsa*instregsa[sisa].decay;
-					volumesa[canal]--;
-					if (volumesa[canal]==0)
-					{
-						envlssa[canal][2]=0;
-						playenvlsa[canal]=0;
-					}
-				}
-			}	
 		}
 	}
+
+	/* Decay */
+	if (envlssa[canal][0]==0 && envlssa[canal][1]==0 && envlssa[canal][2]>0)
+	{
+		cntenvlssa[canal][2]--;
+		if (cntenvlssa[canal][2]==0)
+		{
+			cntenvlssa[canal][2]=factorsa*instregsa[sisa].decay;
+			volumesa[canal]--;
+			if (volumesa[canal]==0)
+			{
+				envlssa[canal][2]=0;
+				playenvlsa[canal]=0;
+			}
+		}
+	}	
 	
 	if (playenvlsa[canal]==0 && instregsa[sisa].repete==1) getenvlsa(canal);
 	
@@ -474,12 +470,6 @@ void envelopsa(unsigned char canal)
 void precriasomsa(unsigned char canal,int freqindex)
 {
 
-	if (playsa==0)
-	{
-		sprintf(txtsts,"Playing %s em C, Oitava 2 - Frequencia: %d\0",instregsa[sisa].nome,notassa[freqindex]);
-		printestado();
-	}
-		
 	playenvlsa[canal]=0;
 	
 	getenvlsa(canal);
