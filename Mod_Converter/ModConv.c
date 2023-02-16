@@ -8,7 +8,7 @@
 /*
 /*  Para compilar: tcc -ml ModConv.c
 /*
-/*  (C) 2022 Penisoft / MadAxe
+/*  (C) 2023 Penisoft / MadAxe
 /*
 
 /* Includes */
@@ -696,7 +696,7 @@ int main(int argc, char *argv[])
 		textcolor(11);
 		cprintf("Mod Converter 1.6\r\n");
 		textcolor(10);
-		cprintf("(C) 2022 Penisoft / MadAxe\r\n");
+		cprintf("(C) 2023 Penisoft / MadAxe\r\n");
 		textcolor(15);
 		cprintf("\nUtilizacao: ModConv NomeMusica.mod\n");
 		return(4);
@@ -743,7 +743,7 @@ void screenclose(void)
 	textcolor(11);
 	cprintf("Mod Converter 1.6\r\n");
 	textcolor(10);
-	cprintf("(C) 2022 Penisoft / MadAxe\r\n");
+	cprintf("(C) 2023 Penisoft / MadAxe\r\n");
 	
 	_setcursortype(_NORMALCURSOR);
 	
@@ -779,7 +779,7 @@ int inicializa(void)
 	textcolor(11);
 	cprintf("Mod Converter 1.6\r\n");
 	textcolor(10);
-	cprintf("(C) 2022 Penisoft / MadAxe\r\n");
+	cprintf("(C) 2023 Penisoft / MadAxe\r\n");
 	cprintf("\r\n");
 	
 	textcolor(15);
@@ -6309,7 +6309,6 @@ void getenvlsa(unsigned char canal)
 	if (envlssa[canal][0]!=0 || envlssa[canal][1]!=0 || envlssa[canal][2]!=0) playenvlsa[canal]=sisa;
 	
 	if (envlssa[canal][0]==0) volumesa[canal]=instregsa[sisa].volume;
-//	if (envlssa[canal][0]==0) volumesa[canal]=volinstsa[sisa];
 	else volumesa[canal]=0;
 	
 }
@@ -6327,53 +6326,48 @@ void envelopsa(unsigned char canal)
 			cntenvlssa[canal][0]=factorsa*instregsa[sisa].attack;
 			volumesa[canal]++;
 			if (volumesa[canal]==instregsa[sisa].volume)
-		//	if (volumesa[canal]==volinstsa[sisa])
 			{
 				envlssa[canal][0]=0;
 				if (envlssa[canal][1]==0 && envlssa[canal][2]==0) playenvlsa[canal]=0;
 			}
 		}
 	}
-	else
+
+	/* Sustain */
+	if (envlssa[canal][0]==0 && envlssa[canal][1]>0)
 	{
-		/* Sustain */
-		if (envlssa[canal][1]>0)
+		cntenvlssa[canal][1]--;
+		if (cntenvlssa[canal][1]==0)
 		{
-			cntenvlssa[canal][1]--;
-			if (cntenvlssa[canal][1]==0)
+			cntenvlssa[canal][1]=factorsa*instregsa[sisa].sustain;
+			cntenvlsusssa[canal]--;
+			if (cntenvlsusssa[canal]==0)
 			{
-				cntenvlssa[canal][1]=factorsa*instregsa[sisa].sustain;
-				cntenvlsusssa[canal]--;
-				if (cntenvlsusssa[canal]==0)
+				envlssa[canal][1]=0;
+				if (envlssa[canal][2]==0)
 				{
-					envlssa[canal][1]=0;
-					if (envlssa[canal][2]==0)
-					{
-						volumesa[canal]=0;
-						playenvlsa[canal]=0;
-					}
+					volumesa[canal]=0;
+					playenvlsa[canal]=0;
 				}
 			}
-		}	
-		else
-		{
-			/* Decay */
-			if (envlssa[canal][2]>0)
-			{
-				cntenvlssa[canal][2]--;
-				if (cntenvlssa[canal][2]==0)
-				{
-					cntenvlssa[canal][2]=factorsa*instregsa[sisa].decay;
-					volumesa[canal]--;
-					if (volumesa[canal]==0)
-					{
-						envlssa[canal][2]=0;
-						playenvlsa[canal]=0;
-					}
-				}
-			}	
 		}
-	}
+	}	
+
+	/* Decay */
+	if (envlssa[canal][0]==0 && envlssa[canal][1]==0 && envlssa[canal][2]>0)
+	{
+		cntenvlssa[canal][2]--;
+		if (cntenvlssa[canal][2]==0)
+		{
+			cntenvlssa[canal][2]=factorsa*instregsa[sisa].decay;
+			volumesa[canal]--;
+			if (volumesa[canal]==0)
+			{
+				envlssa[canal][2]=0;
+				playenvlsa[canal]=0;
+			}
+		}
+	}	
 	
 	if (playenvlsa[canal]==0 && instregsa[sisa].repete==1) getenvlsa(canal);
 	
@@ -6498,7 +6492,6 @@ void getenvlay(unsigned char canal)
 	if (envlsay[canal][0]!=0 || envlsay[canal][1]!=0 || envlsay[canal][2]!=0) playenvlay[canal]=siay;
 	
 	if (envlsay[canal][0]==0) volumeay[canal]=instregay[siay].volume;
-//	if (envlsay[canal][0]==0) volumeay[canal]=volinstay[siay];
 	else volumeay[canal]=0;
 	
 }
@@ -6516,53 +6509,48 @@ void envelopay(unsigned char canal)
 			cntenvlsay[canal][0]=factoray*instregay[siay].attack;
 			volumeay[canal]++;
 			if (volumeay[canal]==instregay[siay].volume)
-		//	if (volumeay[canal]==volinstay[siay])
 			{
 				envlsay[canal][0]=0;
 				if (envlsay[canal][1]==0 && envlsay[canal][2]==0) playenvlay[canal]=0;
 			}
 		}
 	}
-	else
+
+	/* Sustain */
+	if (envlsay[canal][0]==0 && envlsay[canal][1]>0)
 	{
-		/* Sustain */
-		if (envlsay[canal][1]>0)
+		cntenvlsay[canal][1]--;
+		if (cntenvlsay[canal][1]==0)
 		{
-			cntenvlsay[canal][1]--;
-			if (cntenvlsay[canal][1]==0)
+			cntenvlsay[canal][1]=factoray*instregay[siay].sustain;
+			cntenvlsussay[canal]--;
+			if (cntenvlsussay[canal]==0)
 			{
-				cntenvlsay[canal][1]=factoray*instregay[siay].sustain;
-				cntenvlsussay[canal]--;
-				if (cntenvlsussay[canal]==0)
+				envlsay[canal][1]=0;
+				if (envlsay[canal][2]==0)
 				{
-					envlsay[canal][1]=0;
-					if (envlsay[canal][2]==0)
-					{
-						volumeay[canal]=0;
-						playenvlay[canal]=0;
-					}
+					volumeay[canal]=0;
+					playenvlay[canal]=0;
 				}
 			}
-		}	
-		else
-		{
-			/* Decay */
-			if (envlsay[canal][2]>0)
-			{
-				cntenvlsay[canal][2]--;
-				if (cntenvlsay[canal][2]==0)
-				{
-					cntenvlsay[canal][2]=factoray*instregay[siay].decay;
-					volumeay[canal]--;
-					if (volumeay[canal]==0)
-					{
-						envlsay[canal][2]=0;
-						playenvlay[canal]=0;
-					}
-				}
-			}	
 		}
-	}
+	}	
+
+	/* Decay */
+	if (envlsay[canal][0]==0 && envlsay[canal][1]==0 && envlsay[canal][2]>0)
+	{
+		cntenvlsay[canal][2]--;
+		if (cntenvlsay[canal][2]==0)
+		{
+			cntenvlsay[canal][2]=factoray*instregay[siay].decay;
+			volumeay[canal]--;
+			if (volumeay[canal]==0)
+			{
+				envlsay[canal][2]=0;
+				playenvlay[canal]=0;
+			}
+		}
+	}	
 	
 	if (playenvlay[canal]==0 && instregay[siay].repete==1) getenvlay(canal);
 	
