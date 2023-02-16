@@ -6,7 +6,7 @@
 /*
 /*  Para compilar: tcc FmIntCrt.c
 /*
-/*  (C) 2022 Penisoft / MadAxe
+/*  (C) 2023 Penisoft / MadAxe
 /*
 */
 
@@ -268,7 +268,7 @@ void screenclose(void)
 	textcolor(11);
 	cprintf("Instrument Creator 1.8\r\n");
 	textcolor(10);
-	cprintf("(C) 2022 Penisoft / MadAxe\r\n");
+	cprintf("(C) 2023 Penisoft / MadAxe\r\n");
 	
 	_setcursortype(_NORMALCURSOR);
 	
@@ -285,7 +285,7 @@ int inicializa(void)
 	textcolor(11);
 	cprintf("Instrument Creator 1.8\r\n");
 	textcolor(10);
-	cprintf("(C) 2022 Penisoft / MadAxe\r\n\r\n");
+	cprintf("(C) 2023 Penisoft / MadAxe\r\n\r\n");
 	
 	textcolor(15);
 
