@@ -6,7 +6,7 @@
 /*
 /*   Para compilar: tcc AyIntCrt.c
 /*
-/*  (C) 2022 Penisoft / MadAxe
+/*  (C) 2023 Penisoft / MadAxe
 /*
 */
 
@@ -119,6 +119,7 @@ void writesa7(int reg, int value);
 void getenvlay(void);
 void envelopay(void);
 void precriasomay(int freqindex);
+void setvolay(void);
 void criasomay(int freqindex);
 void stopsomay(void);
 
@@ -169,7 +170,6 @@ int valcolor;
 /* Oitava */
 int oitavaay=2;
 int volumeay;
-int freqay;
 int playenvlay;
 int factoray=5;
 
@@ -259,7 +259,7 @@ void screenclose(void)
 	textcolor(11);
 	cprintf("AY-3-8912 Instrument Creator 1.5\r\n");
 	textcolor(10);
-	cprintf("(C) 2022 Penisoft / MadAxe\r\n");
+	cprintf("(C) 2023 Penisoft / MadAxe\r\n");
 
 	_setcursortype(_NORMALCURSOR);
 	
@@ -276,7 +276,7 @@ int inicializa(void)
 	textcolor(11);
 	cprintf("AY-3-8912 Instrument Creator 1.5\r\n");
 	textcolor(10);
-	cprintf("(C) 2022 Penisoft / MadAxe\r\n\r\n");
+	cprintf("(C) 2023 Penisoft / MadAxe\r\n\r\n");
 	
 	textcolor(15);
 
@@ -441,46 +441,42 @@ void envelopay(void)
 			}
 		}
 	}
-	else
+
+	/* Sustain */
+	if (envlsay[0]==0 && envlsay[1]>0)
 	{
-		/* Sustain */
-		if (envlsay[1]>0)
+		cntenvlsay[1]--;
+		if (cntenvlsay[1]==0)
 		{
-			cntenvlsay[1]--;
-			if (cntenvlsay[1]==0)
+			cntenvlsay[1]=factoray*instregay[sy].sustain;
+			cntenvlsussay--;
+			if (cntenvlsussay==0)
 			{
-				cntenvlsay[1]=factoray*instregay[sy].sustain;
-				cntenvlsussay--;
-				if (cntenvlsussay==0)
+				envlsay[1]=0;
+				if (envlsay[2]==0)
 				{
-					envlsay[1]=0;
-					if (envlsay[2]==0)
-					{
-						volumeay=0;
-						playenvlay=0;
-					}
+					volumeay=0;
+					playenvlay=0;
 				}
 			}
-		}	
-		else
-		{
-			/* Decay */
-			if (envlsay[2]>0)
-			{
-				cntenvlsay[2]--;
-				if (cntenvlsay[2]==0) 
-				{
-					cntenvlsay[2]=factoray*instregay[sy].decay;
-					volumeay--;
-					if (volumeay==0) 
-					{
-						envlsay[2]=0;
-						playenvlay=0;
-					}
-				}
-			}	
 		}
-	}
+	}	
+	
+	/* Decay */
+	if (envlsay[0]==0 && envlsay[1]==0 && envlsay[2]>0)
+	{
+		cntenvlsay[2]--;
+		if (cntenvlsay[2]==0) 
+		{
+			cntenvlsay[2]=factoray*instregay[sy].decay;
+			volumeay--;
+			if (volumeay==0) 
+			{
+				envlsay[2]=0;
+				playenvlay=0;
+			}
+		}
+	}	
 	
 	if (playenvlay==0 && instregay[sy].repete==1) getenvlay();
 	
@@ -497,9 +493,19 @@ void precriasomay(int freqindex)
 	
 	getenvlay();
 	
-	if (playenvlay==1) freqay=freqindex;
-	else criasomay(freqindex);
+	criasomay(freqindex);
 	
+}
+
+/* Apenas atualiza o Volume do Canal AY-3-8912 em caso de Envelope */
+void setvolay(void)
+{
+	
+	writesa1(0x00,volumeay*16+volumeay);		/* Volume */
+	
+	writesa1(0x014,instregay[sy].freqenb); 		/* Frequência Enable */
+	writesa1(0x015,instregay[sy].noiseenb);		/* Noise Enable */
+				
 }
 
 /* Produz um Som AY-3-8912 */
@@ -835,7 +841,7 @@ void navega(void)
 			if (playenvlay==1)
 			{
 				envelopay();
-				criasomay(freqay);
+				setvolay();
 			}
 		}
 		
