@@ -214,7 +214,7 @@ void screenopen(void)
 	textcolor(11);
 	cprintf(" FM Player 1.5 - ");
 	textcolor(10);
-	cprintf(" (C) 2022 Penisoft / MadAxe\r\n");
+	cprintf(" (C) 2023 Penisoft / MadAxe\r\n");
 	
 	textcolor(7);
 	
@@ -237,7 +237,7 @@ void screenclose(void)
 	textcolor(11);
 	cprintf("FM Player 1.5\r\n");
 	textcolor(10);
-	cprintf("(C) 2022 Penisoft / MadAxe\r\n");
+	cprintf("(C) 2023 Penisoft / MadAxe\r\n");
 	
 	_setcursortype(_NORMALCURSOR);
 	
