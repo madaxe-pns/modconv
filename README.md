@@ -6,7 +6,7 @@ Site Oficial: https://madaxe-pns.github.io/modconv/
 
 Por José Mário Machado a.k.a. MadAxe
 
-(C) 2022 Penisoft
+(C) 2023 Penisoft
 
 ### AY_Instrument_Creator
 Sources do Criador/Editor/Player de Instrumentos AY-3-8912.
