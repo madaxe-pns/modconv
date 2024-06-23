@@ -1,10 +1,10 @@
 /*
-/*        FM Player 1.5
+/*        FM Player 1.6
 /*
 /*      Leitor de Músicas FM
 /*    AdLib / Sound Blaster Pro
 /*  
-/*  Para compilar: tcc FMPlayer.c  
+/*  Para compilar: tcc -ml FMPlayer.c
 /*
 */
 
@@ -212,9 +212,9 @@ void screenopen(void)
 
 	cprintf("\r\n");	
 	textcolor(11);
-	cprintf(" FM Player 1.5 - ");
+	cprintf(" FM Player 1.6 - ");
 	textcolor(10);
-	cprintf(" (C) 2023 Penisoft / MadAxe\r\n");
+	cprintf(" (C) 2024 Penisoft / MadAxe\r\n");
 	
 	textcolor(7);
 	
@@ -235,9 +235,9 @@ void screenclose(void)
 	clrscr();	
 	
 	textcolor(11);
-	cprintf("FM Player 1.5\r\n");
+	cprintf("FM Player 1.6\r\n");
 	textcolor(10);
-	cprintf("(C) 2023 Penisoft / MadAxe\r\n");
+	cprintf("(C) 2024 Penisoft / MadAxe\r\n");
 	
 	_setcursortype(_NORMALCURSOR);
 	
@@ -632,6 +632,12 @@ int lemusicafm(void)
 	
 	/* Aloca Memória para as Patterns FM */
 	patinfofm=(char*)calloc(SIZEPATINFOFM*cabfilefm.maxpat,sizeof(char));
+	if (patinfofm==NULL)
+	{
+		sprintf(txtsts,"Erro ao Alocar Memoria - Patterns FM!\0");
+		fclose(fp);
+		return(3);
+	}
 	
 	/* Informação das Patterns FM */
 	if (fread(patinfofm,SIZEPATINFOFM*cabfilefm.maxpat,1,fp)==0)
@@ -668,7 +674,7 @@ int lemusicafm(void)
 void carregapatfm(void)
 {
 
-	int i,j;
+	unsigned int i,j;
 	int x,y;
 	
 	pattern=songpos[position];
