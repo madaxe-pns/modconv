@@ -1,5 +1,5 @@
 /*
-/*  Mod Converter 1.6
+/*  Mod Converter 1.7
 /*	
 /*  Converte um ficheiro .Mod para:
 /*      AY-3-8912 / YM2149F - ZX Spectrum 128K, Atari ST
@@ -8,7 +8,7 @@
 /*
 /*  Para compilar: tcc -ml ModConv.c
 /*
-/*  (C) 2023 Penisoft / MadAxe
+/*  (C) 2024 Penisoft / MadAxe
 /*
 
 /* Includes */
@@ -694,9 +694,9 @@ int main(int argc, char *argv[])
 	{
 		clrscr();
 		textcolor(11);
-		cprintf("Mod Converter 1.6\r\n");
+		cprintf("Mod Converter 1.7\r\n");
 		textcolor(10);
-		cprintf("(C) 2023 Penisoft / MadAxe\r\n");
+		cprintf("(C) 2024 Penisoft / MadAxe\r\n");
 		textcolor(15);
 		cprintf("\nUtilizacao: ModConv NomeMusica.mod\n");
 		return(4);
@@ -741,9 +741,9 @@ void screenclose(void)
 	clrscr();	
 	
 	textcolor(11);
-	cprintf("Mod Converter 1.6\r\n");
+	cprintf("Mod Converter 1.7\r\n");
 	textcolor(10);
-	cprintf("(C) 2023 Penisoft / MadAxe\r\n");
+	cprintf("(C) 2024 Penisoft / MadAxe\r\n");
 	
 	_setcursortype(_NORMALCURSOR);
 	
@@ -777,9 +777,9 @@ int inicializa(void)
 	clrscr();
 	
 	textcolor(11);
-	cprintf("Mod Converter 1.6\r\n");
+	cprintf("Mod Converter 1.7\r\n");
 	textcolor(10);
-	cprintf("(C) 2023 Penisoft / MadAxe\r\n");
+	cprintf("(C) 2024 Penisoft / MadAxe\r\n");
 	cprintf("\r\n");
 	
 	textcolor(15);
@@ -1192,7 +1192,7 @@ void alteracabmod(void)
 void carregapat(void)
 {
 
-	int i,j;
+	unsigned int i,j;
 	int x,y;
 	
 	/* Vai buscar a Pattern correspondente a respetiva Position */
@@ -3258,9 +3258,9 @@ void navegacnlfm(void)
 void convertmodfm(void)
 {
 	
-	int i,j;
+	unsigned int i,j;
 	int x,y;
-	int p,h;
+	unsigned int p,h;
 	
 	unsigned char fmefect,fmfectpar,fmsam;
 	
@@ -3493,7 +3493,7 @@ void alteracabconvfm(void)
 void carregapatfm(void)
 {
 
-	int i,j;
+	unsigned int i,j;
 	int x,y;
 	
 	pattern=songpos[position];
@@ -4298,9 +4298,9 @@ void navegacnlsa(void)
 void convertmodsa(void)
 {
 	
-	int i,j;
+	unsigned int i,j;
 	int x,y;
-	int p,h;
+	unsigned int p,h;
 	
 	unsigned char saefect,safectpar,sasam;
 	
@@ -4529,7 +4529,7 @@ void alteracabconvsa(void)
 void carregapatsa(void)
 {
 
-	int i,j;
+	unsigned int i,j;
 	int x,y;
 	
 	pattern=songpos[position];
@@ -5321,9 +5321,9 @@ void navegacnlay(void)
 void convertmoday(void)
 {
 	
-	int i,j;
+	unsigned int i,j;
 	int x,y;
-	int p,h;
+	unsigned int p,h;
 	int hic,loc;
 	int hic2,loc2;
 	
@@ -5577,7 +5577,7 @@ void alteracabconvay(void)
 void carregapatay(void)
 {
 
-	int i,j;
+	unsigned int i,j;
 	int x,y;
 	
 	pattern=songpos[position];
