@@ -1,10 +1,10 @@
 /*
-/*         SAA Player 1.5
+/*         SAA Player 1.6
 /*
 /*  Leitor de Músicas Philips SAA1099
 /*  CMS Card/Game Blaster, Sam Coupé
 /*
-/*   Para compilar: tcc SAAPlayr.c
+/*   Para compilar: tcc -ml SAAPlayr.c
 /*
 */
 
@@ -208,9 +208,9 @@ void screenopen(void)
 
 	cprintf("\r\n");	
 	textcolor(11);
-	cprintf(" SAA Player 1.5 - ");
+	cprintf(" SAA Player 1.6 - ");
 	textcolor(10);
-	cprintf(" (C) 2023 Penisoft / MadAxe\r\n");
+	cprintf(" (C) 2024 Penisoft / MadAxe\r\n");
 	
 	textcolor(7);
 	
@@ -230,9 +230,9 @@ void screenclose(void)
 	clrscr();	
 	
 	textcolor(11);
-	cprintf("SAA Player 1.5\r\n");
+	cprintf("SAA Player 1.6\r\n");
 	textcolor(10);
-	cprintf("(C) 2023 Penisoft / MadAxe\r\n");
+	cprintf("(C) 2024 Penisoft / MadAxe\r\n");
 	
 	_setcursortype(_NORMALCURSOR);
 	
@@ -602,6 +602,12 @@ int lemusicasa(void)
 	
 	/* Aloca Memória para as Patterns SAA1099 */
 	patinfosa=(char*)calloc(SIZEPATINFOSA*cabfilesa.maxpat,sizeof(char));
+	if (patinfosa==NULL)
+	{
+		sprintf(txtsts,"Erro ao Alocar Memoria - Patterns SAA!\0");
+		fclose(fp);
+		return(3);
+	}
 	
 	/* Informação das Patterns SAA1099 */
 	if (fread(patinfosa,SIZEPATINFOSA*cabfilesa.maxpat,1,fp)==0)
@@ -638,7 +644,7 @@ int lemusicasa(void)
 void carregapatsa(void)
 {
 
-	int i,j;
+	unsigned int i,j;
 	int x,y;
 	
 	pattern=songpos[position];
