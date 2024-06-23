@@ -1,8 +1,8 @@
 /*
 
-   Atari YM Player 1.2
+   Atari YM Player 1.3
 	
-    (C) 2023 Penisoft
+    (C) 2024 Penisoft
 	
 */
 
@@ -466,7 +466,7 @@ void printmenu(void)
     Goto_pos(0,0);
 	Paper(0);
     Ink(1);
-	printf("Atari YM Player 1.2");
+	printf("Atari YM Player 1.3");
 	
     Goto_pos(2,0);
 	Ink(2);
@@ -479,7 +479,7 @@ void printmenu(void)
 	
 	Goto_pos(25,0);
     Ink(1);
-	printf("(C) 2023 Penisoft / MadAxe");
+	printf("(C) 2024 Penisoft / MadAxe");
 	
 	
 	
@@ -537,7 +537,7 @@ void printdados(void)
 	
 	Goto_pos(25,0);
     Ink(1);
-	printf("(C) 2023 Penisoft / MadAxe");
+	printf("(C) 2024 Penisoft / MadAxe");
 	
 }
 
@@ -553,7 +553,7 @@ void printestado(void)
 void carregapatay(void)
 {
 
-	int i,j;
+	unsigned int i,j;
 	int x,y;
 	
 	pattern=songpos[position];
